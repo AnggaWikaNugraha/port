@@ -20,7 +20,7 @@ export default function Login() {
       return;
     }
 
-    window.location.href = "/pages/dashboard";
+    window.location.href = "/admin/dashboard";
   };
 
   return (
