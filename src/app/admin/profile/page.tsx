@@ -44,18 +44,20 @@ export default function AdminProfilePage() {
 
   // ADD SKILL
   const addSkill = async () => {
-    if (!newSkill.trim()) return;
-
-    const res = await fetch("/api/admin/skills/create", {
-      method: "POST",
-      body: JSON.stringify({ skill: newSkill }),
-    });
-
-    if (res.ok) {
-      setSkills([{ id: "temp" + Date.now(), skill: newSkill }, ...skills]);
+      if (!newSkill.trim()) return;
+    
+      await fetch("/api/admin/skills/create", {
+        method: "POST",
+        body: JSON.stringify({ skill: newSkill }),
+      });
+    
       setNewSkill("");
-    }
-  };
+    
+      // REFRESH from DB
+      const updated = await fetch("/api/admin/skills").then(r => r.json());
+      setSkills(updated);
+    };
+    
 
   // DELETE SKILL
   const deleteSkill = async (id: string) => {
