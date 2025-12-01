@@ -4,15 +4,20 @@ import { useState, useEffect } from "react";
 
 export default function AdminProfilePage() {
   const [user, setUser] = useState<any>(null);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [newSkill, setNewSkill] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // FETCH USER + SKILLS
   useEffect(() => {
-    fetch("/api/profile")
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/profile").then((res) => res.json()),
+      fetch("/api/admin/skills").then((res) => res.json()),
+    ]).then(([userData, skillData]) => {
+      setUser(userData);
+      setSkills(skillData);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
@@ -23,6 +28,7 @@ export default function AdminProfilePage() {
     );
   }
 
+  // SAVE PROFILE
   const saveProfile = async () => {
     const res = await fetch("/api/profile/update", {
       method: "POST",
@@ -36,11 +42,39 @@ export default function AdminProfilePage() {
     }
   };
 
+  // ADD SKILL
+  const addSkill = async () => {
+    if (!newSkill.trim()) return;
+
+    const res = await fetch("/api/admin/skills/create", {
+      method: "POST",
+      body: JSON.stringify({ skill: newSkill }),
+    });
+
+    if (res.ok) {
+      setSkills([{ id: "temp" + Date.now(), skill: newSkill }, ...skills]);
+      setNewSkill("");
+    }
+  };
+
+  // DELETE SKILL
+  const deleteSkill = async (id: string) => {
+    const res = await fetch("/api/admin/skills/delete", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
+
+    if (res.ok) {
+      setSkills(skills.filter((s) => s.id !== id));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-10">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-6 md:p-10 border border-gray-200">
         <h1 className="text-3xl font-bold mb-8 text-gray-900">Edit Profile</h1>
 
+        {/* PROFILE FIELDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input label="Name" value={user.name} onChange={(e) => setUser({ ...user, name: e.target.value })} />
           <Input label="Username" value={user.username} onChange={(e) => setUser({ ...user, username: e.target.value })} />
@@ -55,12 +89,12 @@ export default function AdminProfilePage() {
           <Input label="Company" value={user.company} onChange={(e) => setUser({ ...user, company: e.target.value })} />
         </div>
 
-        {/* Avatar URL full width */}
+        {/* Avatar URL */}
         <div className="mt-6">
           <Input label="Avatar URL" value={user.avatar_url} onChange={(e) => setUser({ ...user, avatar_url: e.target.value })} />
         </div>
 
-        {/* Bio full width */}
+        {/* Bio */}
         <div className="mt-6">
           <Input
             label="Bio"
@@ -70,6 +104,46 @@ export default function AdminProfilePage() {
           />
         </div>
 
+        {/* SKILLS SECTION */}
+        <div className="mt-10">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Skills</h2>
+
+          {/* Add Skill Input */}
+          <div className="flex gap-3">
+            <input
+              className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-200"
+              placeholder="Add new skill..."
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+            />
+            <button
+              onClick={addSkill}
+              className="px-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+
+          {/* List Skills */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            {skills.map((s) => (
+              <div
+                key={s.id}
+                className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-full"
+              >
+                <span>{s.skill}</span>
+                <button
+                  onClick={() => deleteSkill(s.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SAVE BUTTON */}
         <div className="flex justify-end mt-8">
           <button
             onClick={saveProfile}
