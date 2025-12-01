@@ -76,22 +76,22 @@ export default function AdminProfilePage() {
 
         {/* PROFILE FIELDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input label="Name" value={user.name} onChange={(e) => setUser({ ...user, name: e.target.value })} />
-          <Input label="Username" value={user.username} onChange={(e) => setUser({ ...user, username: e.target.value })} />
+          <Input label="Name" value={user.name} onChange={(e: any) => setUser({ ...user, name: e.target.value })} />
+          <Input label="Username" value={user.username} onChange={(e: any) => setUser({ ...user, username: e.target.value })} />
 
-          <Input label="Email" value={user.email} onChange={(e) => setUser({ ...user, email: e.target.value })} />
-          <Input label="Phone" value={user.phone} onChange={(e) => setUser({ ...user, phone: e.target.value })} />
+          <Input label="Email" value={user.email} onChange={(e: any) => setUser({ ...user, email: e.target.value })} />
+          <Input label="Phone" value={user.phone} onChange={(e: any) => setUser({ ...user, phone: e.target.value })} />
 
-          <Input label="Location" value={user.location} onChange={(e) => setUser({ ...user, location: e.target.value })} />
-          <Input label="Website" value={user.website} onChange={(e) => setUser({ ...user, website: e.target.value })} />
+          <Input label="Location" value={user.location} onChange={(e: any) => setUser({ ...user, location: e.target.value })} />
+          <Input label="Website" value={user.website} onChange={(e: any) => setUser({ ...user, website: e.target.value })} />
 
-          <Input label="Job Title" value={user.job_title} onChange={(e) => setUser({ ...user, job_title: e.target.value })} />
-          <Input label="Company" value={user.company} onChange={(e) => setUser({ ...user, company: e.target.value })} />
+          <Input label="Job Title" value={user.job_title} onChange={(e: any) => setUser({ ...user, job_title: e.target.value })} />
+          <Input label="Company" value={user.company} onChange={(e: any) => setUser({ ...user, company: e.target.value })} />
         </div>
 
         {/* Avatar URL */}
         <div className="mt-6">
-          <Input label="Avatar URL" value={user.avatar_url} onChange={(e) => setUser({ ...user, avatar_url: e.target.value })} />
+          <Input label="Avatar URL" value={user.avatar_url} onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })} />
         </div>
 
         {/* Bio */}
@@ -100,7 +100,7 @@ export default function AdminProfilePage() {
             label="Bio"
             type="textarea"
             value={user.bio}
-            onChange={(e) => setUser({ ...user, bio: e.target.value })}
+            onChange={(e: any) => setUser({ ...user, bio: e.target.value })}
           />
         </div>
 
