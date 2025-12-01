@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
   try {
+
     const { email, password } = await req.json();
 
     const [rows]: any = await db.query(
@@ -39,10 +40,11 @@ export async function POST(req: Request) {
       status: 200,
       headers: {
         "Set-Cookie":
-          `token=${token}; HttpOnly; SameSite=Strict; Secure; Path=/; Max-Age=86400`,
+          `token=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400`,
         "Content-Type": "application/json",
       },
     });
+    
 
   } catch (error: any) {
     return Response.json({ error: error.message }, { status: 500 });

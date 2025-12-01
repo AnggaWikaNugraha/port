@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 export default function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
 
+
   if (!token) {
     return NextResponse.redirect(new URL("/pages/login", req.url));
   }
@@ -18,5 +19,6 @@ export default function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+      matcher: ["/admin/:path*"],
+      runtime: "nodejs",
 };
