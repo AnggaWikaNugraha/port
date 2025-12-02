@@ -6,47 +6,53 @@ export default function AdminProfilePage() {
   const [user, setUser] = useState<any>(null);
 
   const [skills, setSkills] = useState<any[]>([]);
-  const [newSkill, setNewSkill] = useState<any>("");
+  const [newSkill, setNewSkill] = useState("");
 
   const [interests, setInterests] = useState<any[]>([]);
-  const [newInterest, setNewInterest] = useState<any>("");
+  const [newInterest, setNewInterest] = useState("");
 
-  const [loading, setLoading] = useState<any>(true);
+  const [experiences, setExperiences] = useState<any[]>([]);
+  const [newExp, setNewExp] = useState({
+    company: "",
+    companyLogoUrl: "",
+    location: "",
+  });
 
-  // FETCH USER + SKILLS + INTERESTS
+  const [loading, setLoading] = useState(true);
+
+  // ============= FETCH ALL DATA =============
   useEffect(() => {
     Promise.all([
-      fetch("/api/profile").then((res: any) => res.json()),
-      fetch("/api/admin/skills").then((res: any) => res.json()),
-      fetch("/api/admin/interests").then((res: any) => res.json()),
-    ]).then(([userData, skillData, interestData]) => {
+      fetch("/api/profile").then((r) => r.json()),
+      fetch("/api/admin/skills").then((r) => r.json()),
+      fetch("/api/admin/interests").then((r) => r.json()),
+      fetch("/api/admin/experience").then((r) => r.json()),
+    ]).then(([userData, skillData, interestData, expData]) => {
       setUser(userData);
       setSkills(skillData);
       setInterests(interestData);
+      setExperiences(expData);
       setLoading(false);
     });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
 
-  // SAVE PROFILE
+  // ================================
+  // PROFILE SAVE
+  // ================================
   const saveProfile = async () => {
-    const res: any = await fetch("/api/profile/update", {
+    await fetch("/api/profile/update", {
       method: "POST",
       body: JSON.stringify(user),
     });
 
-    if (res.ok) alert("Profile updated!");
-    else alert("Failed updating profile!");
+    alert("Profile Updated!");
   };
 
-  // ADD SKILL
+  // ================================
+  // SKILLS CRUD
+  // ================================
   const addSkill = async () => {
     if (!newSkill.trim()) return;
 
@@ -55,23 +61,21 @@ export default function AdminProfilePage() {
       body: JSON.stringify({ skill: newSkill }),
     });
 
+    setSkills(await refresh("/api/admin/skills"));
     setNewSkill("");
-
-    const updated: any = await fetch("/api/admin/skills").then((r: any) => r.json());
-    setSkills(updated);
   };
 
-  // DELETE SKILL
-  const deleteSkill = async (id: any) => {
+  const deleteSkill = async (id: string) => {
     await fetch("/api/admin/skills/delete", {
       method: "POST",
       body: JSON.stringify({ id }),
     });
-
-    setSkills(skills.filter((s: any) => s.id !== id));
+    setSkills(await refresh("/api/admin/skills"));
   };
 
-  // ADD INTEREST
+  // ================================
+  // INTEREST CRUD
+  // ================================
   const addInterest = async () => {
     if (!newInterest.trim()) return;
 
@@ -80,133 +84,499 @@ export default function AdminProfilePage() {
       body: JSON.stringify({ interest: newInterest }),
     });
 
+    setInterests(await refresh("/api/admin/interests"));
     setNewInterest("");
-
-    const updated: any = await fetch("/api/admin/interests").then((r: any) => r.json());
-    setInterests(updated);
   };
 
-  // DELETE INTEREST
-  const deleteInterest = async (id: any) => {
+  const deleteInterest = async (id: string) => {
     await fetch("/api/admin/interests/delete", {
       method: "POST",
       body: JSON.stringify({ id }),
     });
 
-    setInterests(interests.filter((i: any) => i.id !== id));
+    setInterests(await refresh("/api/admin/interests"));
   };
 
+  // ================================
+  // EXPERIENCE CRUD
+  // ================================
+  const addExperience = async () => {
+    if (!newExp.company) return;
+
+    await fetch("/api/admin/experience/create", {
+      method: "POST",
+      body: JSON.stringify(newExp),
+    });
+
+    setExperiences(await refresh("/api/admin/experience"));
+    setNewExp({ company: "", companyLogoUrl: "", location: "" });
+  };
+
+  const updateExperience = async (exp: any) => {
+    await fetch("/api/admin/experience/update", {
+      method: "POST",
+      body: JSON.stringify(exp),
+    });
+
+    alert("Experience updated!");
+  };
+
+  const deleteExperience = async (id: string) => {
+    await fetch("/api/admin/experience/delete", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
+
+    setExperiences(await refresh("/api/admin/experience"));
+  };
+
+  // ================================
+  // ROLES CRUD
+  // ================================
+  const addRole = async (expId: string, role: any) => {
+    await fetch("/api/admin/roles/create", {
+      method: "POST",
+      body: JSON.stringify({ ...role, experienceId: expId }),
+    });
+
+    setExperiences(await refresh("/api/admin/experience"));
+  };
+
+  const updateRole = async (role: any) => {
+    await fetch("/api/admin/roles/update", {
+      method: "POST",
+      body: JSON.stringify(role),
+    });
+
+    alert("Role updated!");
+  };
+
+  const deleteRole = async (id: string) => {
+    await fetch("/api/admin/roles/delete", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
+
+    setExperiences(await refresh("/api/admin/experience"));
+  };
+
+  // helper refresh
+  async function refresh(url: string) {
+    return await fetch(url).then((x) => x.json());
+  }
+
+  function updateLocalRole(
+    expId: string,
+    roleId: string,
+    key: string,
+    value: any
+  ) {
+    setExperiences((prev: any[]) =>
+      prev.map((exp) =>
+        exp.id === expId
+          ? {
+              ...exp,
+              roles: exp.roles.map((r: any) =>
+                r.id === roleId ? { ...r, [key]: value } : r
+              ),
+            }
+          : exp
+      )
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-10">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-6 md:p-10 border border-gray-200">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">Edit Profile</h1>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm space-y-10">
+        {/* ================= PROFILE ================= */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Profile</h2>
 
-        {/* PROFILE FIELDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input label="Name" value={user.name} onChange={(e: any) => setUser({ ...user, name: e.target.value })} />
-          <Input label="Username" value={user.username} onChange={(e: any) => setUser({ ...user, username: e.target.value })} />
+          <div className="grid grid-cols-1 gap-4">
+            <Input
+              label="Name"
+              value={user.name}
+              onChange={(e: any) => setUser({ ...user, name: e.target.value })}
+            />
+            <Input
+              label="Username"
+              value={user.username}
+              onChange={(e: any) => setUser({ ...user, username: e.target.value })}
+            />
+            <Input
+              label="Email"
+              value={user.email}
+              onChange={(e: any) => setUser({ ...user, email: e.target.value })}
+            />
+            <Input
+              label="Phone"
+              value={user.phone}
+              onChange={(e: any) => setUser({ ...user, phone: e.target.value })}
+            />
+            <Input
+              label="Location"
+              value={user.location}
+              onChange={(e: any) => setUser({ ...user, location: e.target.value })}
+            />
+            <Input
+              label="Website"
+              value={user.website}
+              onChange={(e: any) => setUser({ ...user, website: e.target.value })}
+            />
+            <Input
+              label="Job Title"
+              value={user.job_title}
+              onChange={(e: any) => setUser({ ...user, job_title: e.target.value })}
+            />
+            <Input
+              label="Company"
+              value={user.company}
+              onChange={(e: any) => setUser({ ...user, company: e.target.value })}
+            />
+          </div>
 
-          <Input label="Email" value={user.email} onChange={(e: any) => setUser({ ...user, email: e.target.value })} />
-          <Input label="Phone" value={user.phone} onChange={(e: any) => setUser({ ...user, phone: e.target.value })} />
+          <Input
+            label="Avatar URL"
+            value={user.avatar_url}
+            onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })}
+            className="mt-3"
+          />
+          <Input
+            label="Bio"
+            type="textarea"
+            value={user.bio}
+            onChange={(e: any) => setUser({ ...user, bio: e.target.value })}
+            className="mt-3"
+          />
 
-          <Input label="Location" value={user.location} onChange={(e: any) => setUser({ ...user, location: e.target.value })} />
-          <Input label="Website" value={user.website} onChange={(e: any) => setUser({ ...user, website: e.target.value })} />
+          <button
+            className="mt-4 px-5 py-2 bg-blue-600 text-white rounded"
+            onClick={saveProfile}
+          >
+            Save Profile
+          </button>
+        </section>
 
-          <Input label="Job Title" value={user.job_title} onChange={(e: any) => setUser({ ...user, job_title: e.target.value })} />
-          <Input label="Company" value={user.company} onChange={(e: any) => setUser({ ...user, company: e.target.value })} />
-        </div>
-
-        {/* Avatar URL */}
-        <div className="mt-6">
-          <Input label="Avatar URL" value={user.avatar_url} onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })} />
-        </div>
-
-        {/* BIO */}
-        <div className="mt-6">
-          <Input label="Bio" type="textarea" value={user.bio} onChange={(e: any) => setUser({ ...user, bio: e.target.value })} />
-        </div>
-
-        {/* SKILLS */}
-        <Section
+        {/* ================= SKILLS ================= */}
+        <SectionCRUD
           title="Skills"
-          items={skills}
+          items={skills.map((s) => ({ id: s.id, label: s.skill }))}
           newValue={newSkill}
           setNewValue={setNewSkill}
           addFn={addSkill}
           deleteFn={deleteSkill}
-          placeholder="Add new skill..."
+          placeholder="Add skill..."
         />
 
-        {/* INTERESTS */}
-        <Section
+        {/* ================= INTERESTS ================= */}
+        <SectionCRUD
           title="Interests"
-          items={interests}
+          items={interests.map((i) => ({ id: i.id, label: i.interest }))}
           newValue={newInterest}
           setNewValue={setNewInterest}
           addFn={addInterest}
           deleteFn={deleteInterest}
-          placeholder="Add new interest..."
+          placeholder="Add interest..."
         />
 
-        {/* SAVE */}
-        <div className="flex justify-end mt-8">
-          <button
-            onClick={saveProfile}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition"
-          >
-            Save Changes
-          </button>
-        </div>
+        {/* ================= EXPERIENCE ================= */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-bold">Experience</h2>
+
+          {/* add exp */}
+          <div className="bg-gray-50 p-4 rounded-lg border space-y-2">
+            <Input
+              placeholder="Company"
+              value={newExp.company}
+              onChange={(e: any) =>
+                setNewExp({ ...newExp, company: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Logo URL"
+              value={newExp.companyLogoUrl}
+              onChange={(e: any) =>
+                setNewExp({ ...newExp, companyLogoUrl: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Location"
+              value={newExp.location}
+              onChange={(e: any) =>
+                setNewExp({ ...newExp, location: e.target.value })
+              }
+            />
+
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded"
+              onClick={addExperience}
+            >
+              Add Experience
+            </button>
+          </div>
+
+          {/* list exp */}
+          {experiences.map((exp) => (
+            <div
+              key={exp.id}
+              className="border rounded-lg p-4 bg-white space-y-3"
+            >
+              {/* EDIT EXPERIENCE */}
+              <Input
+                label="Company"
+                value={exp.company}
+                onChange={(e: any) =>
+                  updateLocalExp(exp.id, "company", e.target.value)
+                }
+              />
+              <Input
+                label="Logo URL"
+                value={exp.companyLogoUrl}
+                onChange={(e: any) =>
+                  updateLocalExp(exp.id, "companyLogoUrl", e.target.value)
+                }
+              />
+              <Input
+                label="Location"
+                value={exp.location}
+                onChange={(e: any) =>
+                  updateLocalExp(exp.id, "location", e.target.value)
+                }
+              />
+
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded"
+                onClick={() => updateExperience(exp)}
+              >
+                Update Experience
+              </button>
+
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded ml-2"
+                onClick={() => deleteExperience(exp.id)}
+              >
+                Delete
+              </button>
+
+              {/* ROLES */}
+              <RoleSection
+                updateLocalRole={updateLocalRole}
+                exp={exp}
+                addRole={addRole}
+                updateRole={updateRole}
+                deleteRole={deleteRole}
+              />
+            </div>
+          ))}
+        </section>
       </div>
     </div>
   );
+
+  // LOCAL UI UPDATE
+  function updateLocalExp(id: string, key: string, val: any) {
+    setExperiences((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, [key]: val } : x))
+    );
+  }
 }
 
-/* INPUT REUSABLE */
-function Input({ label, value, onChange, type = "text" }: any) {
-  const base = "w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-gray-800";
+/* ---------- SMALL REUSABLES ---------- */
 
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  className = "",
+}: any) {
   return (
-    <div className="flex flex-col space-y-1">
-      <label className="font-semibold text-gray-700">{label}</label>
-
+    <div className={`flex flex-col ${className}`}>
+      {label && (
+        <label className="font-medium text-gray-700 mb-1">{label}</label>
+      )}
       {type === "textarea" ? (
-        <textarea className={`border p-3 h-32 ${base}`} value={value || ""} onChange={onChange} />
+        <textarea
+          className="border p-2 rounded w-full"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
       ) : (
-        <input className={`border p-3 ${base}`} value={value || ""} onChange={onChange} />
+        <input
+          className="border p-2 rounded w-full"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
       )}
     </div>
   );
 }
 
-/* SECTION REUSABLE (SKILLS / INTERESTS) */
-function Section({ title, items, newValue, setNewValue, addFn, deleteFn, placeholder }: any) {
+/* TAG CRUD SECTIONS (SKILL/INTEREST) */
+function SectionCRUD({
+  title,
+  items,
+  newValue,
+  setNewValue,
+  addFn,
+  deleteFn,
+  placeholder,
+}: any) {
   return (
-    <div className="mt-10">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-900">{title}</h2>
+    <section>
+      <h2 className="text-2xl font-bold mb-3">{title}</h2>
 
       <div className="flex gap-3">
         <input
-          className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-200"
+          className="flex-1 border p-2 rounded"
           placeholder={placeholder}
           value={newValue}
           onChange={(e: any) => setNewValue(e.target.value)}
         />
-        <button onClick={addFn} className="px-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+
+        <button onClick={addFn} className="px-4 bg-blue-600 text-white rounded">
           Add
         </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mt-4">
         {items.map((item: any) => (
-          <div key={item.id} className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-full">
-            <span>{item.skill || item.interest}</span>
-            <button onClick={() => deleteFn(item.id)} className="text-red-600 hover:text-red-800">
+          <div
+            key={item.id}
+            className="bg-gray-200 px-3 py-1 rounded-full flex items-center gap-2"
+          >
+            <span>{item.label}</span>
+            <button className="text-red-600" onClick={() => deleteFn(item.id)}>
               ✕
             </button>
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/* ROLE SECTION */
+function RoleSection({
+  exp,
+  addRole,
+  updateRole,
+  deleteRole,
+  updateLocalRole,
+}: any) {
+  const [role, setRole] = useState({
+    title: "",
+    employmentType: "",
+    startDate: "",
+    endDate: "",
+    duration: "",
+    description: "",
+  });
+
+  return (
+    <div className="mt-4 space-y-4">
+      <h3 className="font-semibold text-lg">Roles</h3>
+
+      {/* Add Role */}
+      <div className="bg-gray-50 p-3 border rounded space-y-2">
+        <Input
+          placeholder="Role Title"
+          value={role.title}
+          onChange={(e: any) => setRole({ ...role, title: e.target.value })}
+        />
+        <Input
+          placeholder="Employment Type"
+          value={role.employmentType}
+          onChange={(e: any) => setRole({ ...role, employmentType: e.target.value })}
+        />
+        <Input
+          type="date"
+          label="Start Date"
+          value={role.startDate}
+          onChange={(e: any) => setRole({ ...role, startDate: e.target.value })}
+        />
+        <Input
+          type="date"
+          label="End Date"
+          value={role.endDate}
+          onChange={(e: any) => setRole({ ...role, endDate: e.target.value })}
+        />
+
+        <textarea
+          className="border p-2 w-full rounded"
+          value={role.description}
+          placeholder="Description"
+          onChange={(e: any) => setRole({ ...role, description: e.target.value })}
+        />
+
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={() => addRole(exp.id, role)}
+        >
+          Add Role
+        </button>
+      </div>
+
+      {/* List Roles */}
+      {exp.roles?.map((r: any) => (
+        <div key={r.id} className="p-3 bg-gray-100 rounded border space-y-2">
+          <Input
+            label="Title"
+            value={r.title}
+            onChange={(e: any) =>
+              updateLocalRole(exp.id, r.id, "title", e.target.value)
+            }
+          />
+          <Input
+            label="Type"
+            value={r.employmentType}
+            onChange={(e: any) =>
+              updateLocalRole(exp.id, r.id, "employmentType", e.target.value)
+            }
+          />
+          <Input
+            type="date"
+            label="Start"
+            value={r.startDate}
+            onChange={(e: any) =>
+              updateLocalRole(exp.id, r.id, "startDate", e.target.value)
+            }
+          />
+          <Input
+            type="date"
+            label="End"
+            value={r.endDate || ""}
+            onChange={(e: any) =>
+              updateLocalRole(exp.id, r.id, "endDate", e.target.value)
+            }
+          />
+
+          <textarea
+            className="border p-2 w-full rounded"
+            value={r.description}
+            onChange={(e: any) =>
+              updateLocalRole(exp.id, r.id, "description", e.target.value)
+            }
+          />
+
+          <button
+            className="px-3 py-1 bg-green-600 text-white rounded"
+            onClick={() => updateRole(r)}
+          >
+            Update Role
+          </button>
+
+          <button
+            className="ml-2 px-3 py-1 bg-red-600 text-white rounded"
+            onClick={() => deleteRole(r.id)}
+          >
+            Delete
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

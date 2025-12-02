@@ -35,9 +35,9 @@ const AboutPage = () => {
       <div className="max-w-5xl mx-auto">
         <AvatarSection user={user} />
         <InfoSection user={user} />
-        <SkillsSection skills={user.skills} interests={user.interests} />
         <ExperienceSection experiences={user.experience} />
         <EducationSection educations={user.education} />
+        <SkillsSection skills={user.skills} interests={user.interests} />
         <CertificatesSection certificates={user.certificates} />
       </div>
     </div>

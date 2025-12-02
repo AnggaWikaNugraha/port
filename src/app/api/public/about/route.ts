@@ -35,16 +35,57 @@ export async function GET() {
       "SELECT skill FROM user_skills WHERE user_id = ? ORDER BY id ASC",
       [user.id]
     );
-
     const skills = skillsRows.map((s: any) => s.skill);
 
-    // GET INTERESTS  ⬅⬅⬅ BARU DITAMBAHKAN
+    // GET INTERESTS
     const [interestRows]: any = await db.query(
       "SELECT interest FROM user_interests WHERE user_id = ? ORDER BY id ASC",
       [user.id]
     );
-
     const interests = interestRows.map((i: any) => i.interest);
+
+    // ============================
+    //     GET EXPERIENCE
+    // ============================
+    const [expRows]: any = await db.query(
+      `
+      SELECT 
+        id,
+        company,
+        company_logo_url AS companyLogoUrl,
+        location
+      FROM experience
+      WHERE user_id = ?
+      ORDER BY created_at ASC
+      `,
+      [user.id]
+    );
+
+    // ============================
+    //     GET ROLES PER EXPERIENCE
+    // ============================
+    for (const exp of expRows) {
+      const [rolesRows]: any = await db.query(
+        `
+        SELECT
+          id,
+          title,
+          employment_type AS employmentType,
+          start_date AS startDate,
+          end_date AS endDate,
+          duration,
+          description,
+          product_link AS productLink,
+          product_title AS productTitle
+        FROM roles
+        WHERE experience_id = ?
+        ORDER BY start_date DESC
+        `,
+        [exp.id]
+      );
+
+      exp.roles = rolesRows; // ⬅ masukkan roles ke experience
+    }
 
     return Response.json({
       ...user,
@@ -55,11 +96,11 @@ export async function GET() {
         instagram: user.instagram || null,
         website: user.website || null,
       },
-      skills,           // ⬅ SKILLS REAL
-      interests: interests,    // nanti diisi
-      experience: [],   // nanti diisi
-      education: [],    // nanti diisi
-      certificates: [], // nanti diisi
+      skills,
+      interests,
+      experience: expRows, // ⬅ HASIL AKHIR
+      education: [],
+      certificates: [],
     });
 
   } catch (err: any) {
