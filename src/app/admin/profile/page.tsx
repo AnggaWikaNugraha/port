@@ -4,18 +4,25 @@ import { useState, useEffect } from "react";
 
 export default function AdminProfilePage() {
   const [user, setUser] = useState<any>(null);
-  const [skills, setSkills] = useState<any[]>([]);
-  const [newSkill, setNewSkill] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  // FETCH USER + SKILLS
+  const [skills, setSkills] = useState<any[]>([]);
+  const [newSkill, setNewSkill] = useState<any>("");
+
+  const [interests, setInterests] = useState<any[]>([]);
+  const [newInterest, setNewInterest] = useState<any>("");
+
+  const [loading, setLoading] = useState<any>(true);
+
+  // FETCH USER + SKILLS + INTERESTS
   useEffect(() => {
     Promise.all([
-      fetch("/api/profile").then((res) => res.json()),
-      fetch("/api/admin/skills").then((res) => res.json()),
-    ]).then(([userData, skillData]) => {
+      fetch("/api/profile").then((res: any) => res.json()),
+      fetch("/api/admin/skills").then((res: any) => res.json()),
+      fetch("/api/admin/interests").then((res: any) => res.json()),
+    ]).then(([userData, skillData, interestData]) => {
       setUser(userData);
       setSkills(skillData);
+      setInterests(interestData);
       setLoading(false);
     });
   }, []);
@@ -30,45 +37,63 @@ export default function AdminProfilePage() {
 
   // SAVE PROFILE
   const saveProfile = async () => {
-    const res = await fetch("/api/profile/update", {
+    const res: any = await fetch("/api/profile/update", {
       method: "POST",
       body: JSON.stringify(user),
     });
 
-    if (res.ok) {
-      alert("Profile updated!");
-    } else {
-      alert("Failed updating profile!");
-    }
+    if (res.ok) alert("Profile updated!");
+    else alert("Failed updating profile!");
   };
 
   // ADD SKILL
   const addSkill = async () => {
-      if (!newSkill.trim()) return;
-    
-      await fetch("/api/admin/skills/create", {
-        method: "POST",
-        body: JSON.stringify({ skill: newSkill }),
-      });
-    
-      setNewSkill("");
-    
-      // REFRESH from DB
-      const updated = await fetch("/api/admin/skills").then(r => r.json());
-      setSkills(updated);
-    };
-    
+    if (!newSkill.trim()) return;
+
+    await fetch("/api/admin/skills/create", {
+      method: "POST",
+      body: JSON.stringify({ skill: newSkill }),
+    });
+
+    setNewSkill("");
+
+    const updated: any = await fetch("/api/admin/skills").then((r: any) => r.json());
+    setSkills(updated);
+  };
 
   // DELETE SKILL
-  const deleteSkill = async (id: string) => {
-    const res = await fetch("/api/admin/skills/delete", {
+  const deleteSkill = async (id: any) => {
+    await fetch("/api/admin/skills/delete", {
       method: "POST",
       body: JSON.stringify({ id }),
     });
 
-    if (res.ok) {
-      setSkills(skills.filter((s) => s.id !== id));
-    }
+    setSkills(skills.filter((s: any) => s.id !== id));
+  };
+
+  // ADD INTEREST
+  const addInterest = async () => {
+    if (!newInterest.trim()) return;
+
+    await fetch("/api/admin/interests/create", {
+      method: "POST",
+      body: JSON.stringify({ interest: newInterest }),
+    });
+
+    setNewInterest("");
+
+    const updated: any = await fetch("/api/admin/interests").then((r: any) => r.json());
+    setInterests(updated);
+  };
+
+  // DELETE INTEREST
+  const deleteInterest = async (id: any) => {
+    await fetch("/api/admin/interests/delete", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
+
+    setInterests(interests.filter((i: any) => i.id !== id));
   };
 
   return (
@@ -96,56 +121,34 @@ export default function AdminProfilePage() {
           <Input label="Avatar URL" value={user.avatar_url} onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })} />
         </div>
 
-        {/* Bio */}
+        {/* BIO */}
         <div className="mt-6">
-          <Input
-            label="Bio"
-            type="textarea"
-            value={user.bio}
-            onChange={(e: any) => setUser({ ...user, bio: e.target.value })}
-          />
+          <Input label="Bio" type="textarea" value={user.bio} onChange={(e: any) => setUser({ ...user, bio: e.target.value })} />
         </div>
 
-        {/* SKILLS SECTION */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Skills</h2>
+        {/* SKILLS */}
+        <Section
+          title="Skills"
+          items={skills}
+          newValue={newSkill}
+          setNewValue={setNewSkill}
+          addFn={addSkill}
+          deleteFn={deleteSkill}
+          placeholder="Add new skill..."
+        />
 
-          {/* Add Skill Input */}
-          <div className="flex gap-3">
-            <input
-              className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-200"
-              placeholder="Add new skill..."
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-            />
-            <button
-              onClick={addSkill}
-              className="px-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Add
-            </button>
-          </div>
+        {/* INTERESTS */}
+        <Section
+          title="Interests"
+          items={interests}
+          newValue={newInterest}
+          setNewValue={setNewInterest}
+          addFn={addInterest}
+          deleteFn={deleteInterest}
+          placeholder="Add new interest..."
+        />
 
-          {/* List Skills */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {skills.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-full"
-              >
-                <span>{s.skill}</span>
-                <button
-                  onClick={() => deleteSkill(s.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SAVE BUTTON */}
+        {/* SAVE */}
         <div className="flex justify-end mt-8">
           <button
             onClick={saveProfile}
@@ -159,27 +162,51 @@ export default function AdminProfilePage() {
   );
 }
 
+/* INPUT REUSABLE */
 function Input({ label, value, onChange, type = "text" }: any) {
-  const base =
-    "w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-gray-800";
+  const base = "w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-gray-800";
 
   return (
     <div className="flex flex-col space-y-1">
       <label className="font-semibold text-gray-700">{label}</label>
 
       {type === "textarea" ? (
-        <textarea
-          className={`border p-3 h-32 ${base}`}
-          value={value || ""}
-          onChange={onChange}
-        />
+        <textarea className={`border p-3 h-32 ${base}`} value={value || ""} onChange={onChange} />
       ) : (
-        <input
-          className={`border p-3 ${base}`}
-          value={value || ""}
-          onChange={onChange}
-        />
+        <input className={`border p-3 ${base}`} value={value || ""} onChange={onChange} />
       )}
+    </div>
+  );
+}
+
+/* SECTION REUSABLE (SKILLS / INTERESTS) */
+function Section({ title, items, newValue, setNewValue, addFn, deleteFn, placeholder }: any) {
+  return (
+    <div className="mt-10">
+      <h2 className="text-2xl font-semibold mb-4 text-gray-900">{title}</h2>
+
+      <div className="flex gap-3">
+        <input
+          className="flex-1 border p-3 rounded-lg focus:ring-2 focus:ring-blue-200"
+          placeholder={placeholder}
+          value={newValue}
+          onChange={(e: any) => setNewValue(e.target.value)}
+        />
+        <button onClick={addFn} className="px-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Add
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-4">
+        {items.map((item: any) => (
+          <div key={item.id} className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded-full">
+            <span>{item.skill || item.interest}</span>
+            <button onClick={() => deleteFn(item.id)} className="text-red-600 hover:text-red-800">
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -38,6 +38,14 @@ export async function GET() {
 
     const skills = skillsRows.map((s: any) => s.skill);
 
+    // GET INTERESTS  ⬅⬅⬅ BARU DITAMBAHKAN
+    const [interestRows]: any = await db.query(
+      "SELECT interest FROM user_interests WHERE user_id = ? ORDER BY id ASC",
+      [user.id]
+    );
+
+    const interests = interestRows.map((i: any) => i.interest);
+
     return Response.json({
       ...user,
       social: {
@@ -48,7 +56,7 @@ export async function GET() {
         website: user.website || null,
       },
       skills,           // ⬅ SKILLS REAL
-      interests: [],    // nanti diisi
+      interests: interests,    // nanti diisi
       experience: [],   // nanti diisi
       education: [],    // nanti diisi
       certificates: [], // nanti diisi
