@@ -47,19 +47,17 @@ export async function GET() {
     // ============================
     //     GET EXPERIENCE
     // ============================
-    const [expRows]: any = await db.query(
-      `
-      SELECT 
+    const [expRows]: any = await db.query(`
+      SELECT
         id,
         company,
         company_logo_url AS companyLogoUrl,
-        location
+        location,
+        created_at
       FROM experience
-      WHERE user_id = ?
-      ORDER BY created_at ASC
-      `,
-      [user.id]
-    );
+      WHERE user_id = 1
+      ORDER BY created_at DESC
+    `);    
 
     // ============================
     //     GET ROLES PER EXPERIENCE
