@@ -28,7 +28,7 @@ export default function ExperienceSection({ experiences }: Props) {
               {exp.roles.map(role => (
                 <div key={role.id} className="text-sm">
                   <p className="font-semibold text-gray-200">{role.title} ({role.employmentType})</p>
-                  <p className="text-gray-400">{role.startDate ? formatLongDate(role?.startDate) : '-'} - {role.endDate ? formatLongDate(role.endDate) : 'Present' || 'Present'} ({role.duration})</p>
+                  <p className="text-gray-400">{role.startDate ? formatLongDate(role?.startDate) : '-'} - {role.endDate ? formatLongDate(role.endDate) : 'Present'} ({role.duration})</p>
                   {role.description && <p className="text-gray-300 mt-1">{role.description}</p>}
                 </div>
               ))}
