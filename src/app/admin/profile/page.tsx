@@ -18,6 +18,15 @@ export default function AdminProfilePage() {
     location: "",
   });
 
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [newCert, setNewCert] = useState<any>({
+    title: "",
+    issuer: "",
+    issue_date: "",
+    expiration_date: "",
+    credential_url: "",
+  });
+
   const [loading, setLoading] = useState(true);
 
   // ============= FETCH ALL DATA =============
@@ -27,11 +36,13 @@ export default function AdminProfilePage() {
       fetch("/api/admin/skills").then((r) => r.json()),
       fetch("/api/admin/interests").then((r) => r.json()),
       fetch("/api/admin/experience").then((r) => r.json()),
-    ]).then(([userData, skillData, interestData, expData]) => {
+      fetch("/api/admin/certificates").then((r) => r.json()), // ⬅️ NEW
+    ]).then(([userData, skillData, interestData, expData, certData]) => {
       setUser(userData);
       setSkills(skillData);
       setInterests(interestData);
       setExperiences(expData);
+      setCertificates(certData); // ⬅️ NEW
       setLoading(false);
     });
   }, []);
@@ -185,6 +196,54 @@ export default function AdminProfilePage() {
     );
   }
 
+  // ================================
+  // CERTIFICATES CRUD
+  // ================================
+
+  const addCertificate = async () => {
+    if (!newCert.title.trim()) return;
+
+    await fetch("/api/admin/certificates/create", {
+      method: "POST",
+      body: JSON.stringify(newCert),
+    });
+
+    setCertificates(await refresh("/api/admin/certificates"));
+
+    setNewCert({
+      title: "",
+      issuer: "",
+      issue_date: "",
+      expiration_date: "",
+      credential_url: "",
+    });
+  };
+
+  const updateCertificate = async (cert: any) => {
+    await fetch("/api/admin/certificates/update", {
+      method: "POST",
+      body: JSON.stringify(cert),
+    });
+
+    alert("Certificate updated!");
+  };
+
+  const deleteCertificate = async (id: string) => {
+    await fetch("/api/admin/certificates/delete", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
+
+    setCertificates(await refresh("/api/admin/certificates"));
+  };
+
+  // local update input
+  function updateLocalCert(id: string, key: string, value: any) {
+    setCertificates((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [key]: value } : c))
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm space-y-10">
@@ -201,7 +260,9 @@ export default function AdminProfilePage() {
             <Input
               label="Username"
               value={user.username}
-              onChange={(e: any) => setUser({ ...user, username: e.target.value })}
+              onChange={(e: any) =>
+                setUser({ ...user, username: e.target.value })
+              }
             />
             <Input
               label="Email"
@@ -216,29 +277,39 @@ export default function AdminProfilePage() {
             <Input
               label="Location"
               value={user.location}
-              onChange={(e: any) => setUser({ ...user, location: e.target.value })}
+              onChange={(e: any) =>
+                setUser({ ...user, location: e.target.value })
+              }
             />
             <Input
               label="Website"
               value={user.website}
-              onChange={(e: any) => setUser({ ...user, website: e.target.value })}
+              onChange={(e: any) =>
+                setUser({ ...user, website: e.target.value })
+              }
             />
             <Input
               label="Job Title"
               value={user.job_title}
-              onChange={(e: any) => setUser({ ...user, job_title: e.target.value })}
+              onChange={(e: any) =>
+                setUser({ ...user, job_title: e.target.value })
+              }
             />
             <Input
               label="Company"
               value={user.company}
-              onChange={(e: any) => setUser({ ...user, company: e.target.value })}
+              onChange={(e: any) =>
+                setUser({ ...user, company: e.target.value })
+              }
             />
           </div>
 
           <Input
             label="Avatar URL"
             value={user.avatar_url}
-            onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })}
+            onChange={(e: any) =>
+              setUser({ ...user, avatar_url: e.target.value })
+            }
             className="mt-3"
           />
           <Input
@@ -366,6 +437,138 @@ export default function AdminProfilePage() {
                 updateRole={updateRole}
                 deleteRole={deleteRole}
               />
+
+              {/* ================= CERTIFICATES ================= */}
+              <section className="space-y-6">
+                <h2 className="text-2xl font-bold">Certificates</h2>
+
+                {/* ADD CERTIFICATE */}
+                <div className="bg-gray-50 p-4 rounded-lg border space-y-2">
+                  <Input
+                    placeholder="Certificate Title"
+                    value={newCert.title}
+                    onChange={(e: any) =>
+                      setNewCert({ ...newCert, title: e.target.value })
+                    }
+                  />
+
+                  <Input
+                    placeholder="Issuer"
+                    value={newCert.issuer}
+                    onChange={(e: any) =>
+                      setNewCert({ ...newCert, issuer: e.target.value })
+                    }
+                  />
+
+                  <Input
+                    type="date"
+                    label="Issue Date"
+                    value={newCert.issue_date}
+                    onChange={(e: any) =>
+                      setNewCert({ ...newCert, issue_date: e.target.value })
+                    }
+                  />
+
+                  <Input
+                    type="date"
+                    label="Expiration Date"
+                    value={newCert.expiration_date}
+                    onChange={(e: any) =>
+                      setNewCert({
+                        ...newCert,
+                        expiration_date: e.target.value,
+                      })
+                    }
+                  />
+
+                  <Input
+                    placeholder="Credential URL"
+                    value={newCert.credential_url}
+                    onChange={(e: any) =>
+                      setNewCert({ ...newCert, credential_url: e.target.value })
+                    }
+                  />
+
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded"
+                    onClick={addCertificate}
+                  >
+                    Add Certificate
+                  </button>
+                </div>
+
+                {/* LIST CERTIFICATES */}
+                {certificates.map((cert: any) => (
+                  <div
+                    key={cert.id}
+                    className="border p-4 rounded-lg bg-white space-y-3"
+                  >
+                    <Input
+                      label="Title"
+                      value={cert.title}
+                      onChange={(e: any) =>
+                        updateLocalCert(cert.id, "title", e.target.value)
+                      }
+                    />
+
+                    <Input
+                      label="Issuer"
+                      value={cert.issuer}
+                      onChange={(e: any) =>
+                        updateLocalCert(cert.id, "issuer", e.target.value)
+                      }
+                    />
+
+                    <Input
+                      type="date"
+                      label="Issue Date"
+                      value={cert.issue_date}
+                      onChange={(e: any) =>
+                        updateLocalCert(cert.id, "issue_date", e.target.value)
+                      }
+                    />
+
+                    <Input
+                      type="date"
+                      label="Expiration Date"
+                      value={cert.expiration_date}
+                      onChange={(e: any) =>
+                        updateLocalCert(
+                          cert.id,
+                          "expiration_date",
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <Input
+                      label="Credential URL"
+                      value={cert.credential_url}
+                      onChange={(e: any) =>
+                        updateLocalCert(
+                          cert.id,
+                          "credential_url",
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <button
+                      className="px-3 py-1 bg-green-600 text-white rounded"
+                      onClick={() => updateCertificate(cert)}
+                    >
+                      Update
+                    </button>
+
+                    <button
+                      className="ml-2 px-3 py-1 bg-red-600 text-white rounded"
+                      onClick={() => deleteCertificate(cert.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </section>
             </div>
           ))}
         </section>
@@ -490,7 +693,9 @@ function RoleSection({
         <Input
           placeholder="Employment Type"
           value={role.employmentType}
-          onChange={(e: any) => setRole({ ...role, employmentType: e.target.value })}
+          onChange={(e: any) =>
+            setRole({ ...role, employmentType: e.target.value })
+          }
         />
         <Input
           type="date"
@@ -509,7 +714,9 @@ function RoleSection({
           className="border p-2 w-full rounded"
           value={role.description}
           placeholder="Description"
-          onChange={(e: any) => setRole({ ...role, description: e.target.value })}
+          onChange={(e: any) =>
+            setRole({ ...role, description: e.target.value })
+          }
         />
 
         <button
