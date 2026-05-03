@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AdminProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -23,7 +23,11 @@ export default function AdminProfilePage() {
       fetch("/api/admin/experience").then((r) => r.json()),
       fetch("/api/admin/certificates").then((r) => r.json()),
     ]).then(([u, s, i, e, c]) => {
-      setUser(u); setSkills(s); setInterests(i); setExperiences(e); setCertificates(c);
+      setUser(u);
+      setSkills(Array.isArray(s) ? s : []);
+      setInterests(Array.isArray(i) ? i : []);
+      setExperiences(Array.isArray(e) ? e : []);
+      setCertificates(Array.isArray(c) ? c : []);
       setLoading(false);
     });
   }, []);
@@ -154,7 +158,7 @@ export default function AdminProfilePage() {
           )}
           {activeTab === "skills" && (
             <Card>
-              <SkillForm skills={skills} newSkill={newSkill} setNewSkill={setNewSkill} addSkill={addSkill} deleteSkill={deleteSkill} />
+              <SkillForm skills={skills} setSkills={setSkills} newSkill={newSkill} setNewSkill={setNewSkill} addSkill={addSkill} deleteSkill={deleteSkill} />
             </Card>
           )}
           {activeTab === "interests" && (
@@ -265,7 +269,39 @@ function ProfileForm({ user, setUser, saveProfile }: any) {
 /* =========================================================
     SKILLS FORM
 ========================================================= */
-function SkillForm({ skills, newSkill, setNewSkill, addSkill, deleteSkill }: any) {
+function SkillForm({ skills, setSkills, newSkill, setNewSkill, addSkill, deleteSkill }: any) {
+  const dragItem = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+    setDraggingIdx(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOver.current = index;
+    setOverIdx(index);
+  };
+
+  const handleDragEnd = () => {
+    if (dragItem.current !== null && dragOver.current !== null && dragItem.current !== dragOver.current) {
+      const reordered = [...skills];
+      const [moved] = reordered.splice(dragItem.current, 1);
+      reordered.splice(dragOver.current, 0, moved);
+      setSkills(reordered);
+      fetch("/api/admin/skills/reorder", {
+        method: "POST",
+        body: JSON.stringify({ ids: reordered.map((s: any) => s.id) }),
+      });
+    }
+    dragItem.current = null;
+    dragOver.current = null;
+    setDraggingIdx(null);
+    setOverIdx(null);
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex gap-3 flex-col sm:flex-row">
@@ -281,13 +317,31 @@ function SkillForm({ skills, newSkill, setNewSkill, addSkill, deleteSkill }: any
 
       <div className="flex flex-wrap gap-2">
         {skills.length === 0 && <p className="text-gray-500 text-sm">No skills added yet.</p>}
-        {skills.map((s: any) => (
-          <div key={s.id} className="flex items-center gap-2 bg-gray-700/50 border border-gray-600/50 px-3 py-1.5 rounded-xl text-sm text-gray-200">
+        {skills.map((s: any, index: number) => (
+          <div
+            key={s.id}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragEnter={() => handleDragEnter(index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e: any) => e.preventDefault()}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border select-none transition-all cursor-grab active:cursor-grabbing
+              ${draggingIdx === index ? "opacity-40 scale-95" : ""}
+              ${overIdx === index && draggingIdx !== index
+                ? "border-blue-500 bg-blue-500/10 text-white"
+                : "bg-gray-700/50 border-gray-600/50 text-gray-200"
+              }`}
+          >
+            <span className="text-gray-500 text-xs">⠿</span>
             <span>{s.skill}</span>
             <button onClick={() => deleteSkill(s.id)} className="text-gray-500 hover:text-red-400 transition-colors leading-none">✕</button>
           </div>
         ))}
       </div>
+
+      {skills.length > 1 && (
+        <p className="text-xs text-gray-600">Drag pill untuk mengubah urutan</p>
+      )}
     </div>
   );
 }

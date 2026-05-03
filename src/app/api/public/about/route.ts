@@ -32,7 +32,7 @@ export async function GET() {
 
     // GET SKILLS
     const [skillsRows]: any = await db.query(
-      "SELECT skill FROM user_skills WHERE user_id = ? ORDER BY id ASC",
+      "SELECT skill FROM user_skills WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
       [user.id]
     );
     const skills = skillsRows.map((s: any) => s.skill);
