@@ -17,7 +17,11 @@ const AboutPage = () => {
     fetch("/api/public/about")
       .then((res) => res.json())
       .then((data) => {
-        setUser(data);
+        setUser({
+          ...data,
+          avatarUrl: data.avatar_url,
+          jobTitle: data.job_title,
+        });
         setLoading(false);
       });
   }, []);
