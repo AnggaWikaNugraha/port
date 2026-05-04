@@ -39,7 +39,7 @@ export async function GET() {
 
     // GET INTERESTS
     const [interestRows]: any = await db.query(
-      "SELECT interest FROM user_interests WHERE user_id = ? ORDER BY id ASC",
+      "SELECT interest FROM user_interests WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
       [user.id]
     );
     const interests = interestRows.map((i: any) => i.interest);
@@ -56,7 +56,7 @@ export async function GET() {
         created_at
       FROM experience
       WHERE user_id = 1
-      ORDER BY created_at DESC
+      ORDER BY created_at ASC
     `);    
 
     // ============================

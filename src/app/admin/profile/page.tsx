@@ -163,7 +163,7 @@ export default function AdminProfilePage() {
           )}
           {activeTab === "interests" && (
             <Card>
-              <InterestForm interests={interests} newInterest={newInterest} setNewInterest={setNewInterest} addInterest={addInterest} deleteInterest={deleteInterest} />
+              <InterestForm interests={interests} setInterests={setInterests} newInterest={newInterest} setNewInterest={setNewInterest} addInterest={addInterest} deleteInterest={deleteInterest} />
             </Card>
           )}
           {activeTab === "experience" && (
@@ -428,7 +428,39 @@ function SkillForm({ skills, setSkills, newSkill, setNewSkill, addSkill, deleteS
 /* =========================================================
     INTERESTS FORM
 ========================================================= */
-function InterestForm({ interests, newInterest, setNewInterest, addInterest, deleteInterest }: any) {
+function InterestForm({ interests, setInterests, newInterest, setNewInterest, addInterest, deleteInterest }: any) {
+  const dragItem = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+    setDraggingIdx(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOver.current = index;
+    setOverIdx(index);
+  };
+
+  const handleDragEnd = () => {
+    if (dragItem.current !== null && dragOver.current !== null && dragItem.current !== dragOver.current) {
+      const reordered = [...interests];
+      const [moved] = reordered.splice(dragItem.current, 1);
+      reordered.splice(dragOver.current, 0, moved);
+      setInterests(reordered);
+      fetch("/api/admin/interests/reorder", {
+        method: "POST",
+        body: JSON.stringify({ ids: reordered.map((i: any) => i.id) }),
+      });
+    }
+    dragItem.current = null;
+    dragOver.current = null;
+    setDraggingIdx(null);
+    setOverIdx(null);
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex gap-3 flex-col sm:flex-row">
@@ -444,13 +476,31 @@ function InterestForm({ interests, newInterest, setNewInterest, addInterest, del
 
       <div className="flex flex-wrap gap-2">
         {interests.length === 0 && <p className="text-gray-500 text-sm">No interests added yet.</p>}
-        {interests.map((i: any) => (
-          <div key={i.id} className="flex items-center gap-2 bg-gray-700/50 border border-gray-600/50 px-3 py-1.5 rounded-xl text-sm text-gray-200">
+        {interests.map((i: any, index: number) => (
+          <div
+            key={i.id}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragEnter={() => handleDragEnter(index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e: any) => e.preventDefault()}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border select-none transition-all cursor-grab active:cursor-grabbing
+              ${draggingIdx === index ? "opacity-40 scale-95" : ""}
+              ${overIdx === index && draggingIdx !== index
+                ? "border-blue-500 bg-blue-500/10 text-white"
+                : "bg-gray-700/50 border-gray-600/50 text-gray-200"
+              }`}
+          >
+            <span className="text-gray-500 text-xs">⠿</span>
             <span>{i.interest}</span>
             <button onClick={() => deleteInterest(i.id)} className="text-gray-500 hover:text-red-400 transition-colors leading-none">✕</button>
           </div>
         ))}
       </div>
+
+      {interests.length > 1 && (
+        <p className="text-xs text-gray-600">Drag pill untuk mengubah urutan</p>
+      )}
     </div>
   );
 }
