@@ -247,21 +247,100 @@ function BtnDanger({ children, onClick }: any) {
     PROFILE FORM
 ========================================================= */
 function ProfileForm({ user, setUser, saveProfile }: any) {
+  const [editing, setEditing] = useState(false);
+
+  const handleSave = async () => {
+    await saveProfile();
+    setEditing(false);
+  };
+
+  const fields = [
+    { label: "Name", value: user.name },
+    { label: "Username", value: user.username },
+    { label: "Email", value: user.email },
+    { label: "Phone", value: user.phone },
+    { label: "Location", value: user.location },
+    { label: "Job Title", value: user.job_title },
+    { label: "Company", value: user.company },
+    { label: "Website", value: user.website },
+  ];
+
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input label="Name" value={user.name || ""} onChange={(e: any) => setUser({ ...user, name: e.target.value })} />
-        <Input label="Username" value={user.username || ""} onChange={(e: any) => setUser({ ...user, username: e.target.value })} />
-        <Input label="Email" value={user.email || ""} onChange={(e: any) => setUser({ ...user, email: e.target.value })} />
-        <Input label="Phone" value={user.phone || ""} onChange={(e: any) => setUser({ ...user, phone: e.target.value })} />
-        <Input label="Location" value={user.location || ""} onChange={(e: any) => setUser({ ...user, location: e.target.value })} />
-        <Input label="Website" value={user.website || ""} onChange={(e: any) => setUser({ ...user, website: e.target.value })} />
-        <Input label="Job Title" value={user.job_title || ""} onChange={(e: any) => setUser({ ...user, job_title: e.target.value })} />
-        <Input label="Company" value={user.company || ""} onChange={(e: any) => setUser({ ...user, company: e.target.value })} />
+    <div className="space-y-6">
+      {/* Avatar + Identity */}
+      <div className="flex items-center gap-5">
+        {user.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt={user.name}
+            className="w-20 h-20 rounded-2xl object-cover ring-2 ring-gray-700 shrink-0"
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-gray-700 flex items-center justify-center shrink-0">
+            <span className="text-3xl text-gray-400">👤</span>
+          </div>
+        )}
+        <div>
+          <p className="text-xl font-bold text-white">{user.name || "—"}</p>
+          <p className="text-sm text-gray-400">{user.job_title || "—"}{user.company ? ` · ${user.company}` : ""}</p>
+          <p className="text-xs text-gray-500 mt-1">{user.email}</p>
+        </div>
+        <button
+          onClick={() => setEditing(!editing)}
+          className={`ml-auto px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+            editing
+              ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              : "bg-gray-700/60 text-gray-300 hover:bg-gray-700 border border-gray-600/50"
+          }`}
+        >
+          {editing ? "Cancel" : "✏️ Edit"}
+        </button>
       </div>
-      <Input label="Avatar URL" value={user.avatar_url || ""} onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })} />
-      <Input label="Bio" type="textarea" value={user.bio || ""} onChange={(e: any) => setUser({ ...user, bio: e.target.value })} />
-      <BtnPrimary onClick={saveProfile}>Save Profile</BtnPrimary>
+
+      {/* Display Mode */}
+      {!editing && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {fields.map(({ label, value }) => (
+            <div key={label} className="rounded-xl bg-gray-900/40 border border-gray-700/40 px-4 py-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+              <p className="text-sm text-gray-200 truncate">{value || <span className="text-gray-600">—</span>}</p>
+            </div>
+          ))}
+          {user.bio && (
+            <div className="col-span-full rounded-xl bg-gray-900/40 border border-gray-700/40 px-4 py-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Bio</p>
+              <p className="text-sm text-gray-200 leading-relaxed">{user.bio}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Mode */}
+      {editing && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input label="Name" value={user.name || ""} onChange={(e: any) => setUser({ ...user, name: e.target.value })} />
+            <Input label="Username" value={user.username || ""} onChange={(e: any) => setUser({ ...user, username: e.target.value })} />
+            <Input label="Email" value={user.email || ""} onChange={(e: any) => setUser({ ...user, email: e.target.value })} />
+            <Input label="Phone" value={user.phone || ""} onChange={(e: any) => setUser({ ...user, phone: e.target.value })} />
+            <Input label="Location" value={user.location || ""} onChange={(e: any) => setUser({ ...user, location: e.target.value })} />
+            <Input label="Website" value={user.website || ""} onChange={(e: any) => setUser({ ...user, website: e.target.value })} />
+            <Input label="Job Title" value={user.job_title || ""} onChange={(e: any) => setUser({ ...user, job_title: e.target.value })} />
+            <Input label="Company" value={user.company || ""} onChange={(e: any) => setUser({ ...user, company: e.target.value })} />
+          </div>
+          <Input label="Avatar URL" value={user.avatar_url || ""} onChange={(e: any) => setUser({ ...user, avatar_url: e.target.value })} />
+          <Input label="Bio" type="textarea" value={user.bio || ""} onChange={(e: any) => setUser({ ...user, bio: e.target.value })} />
+          <div className="flex gap-3">
+            <BtnPrimary onClick={handleSave}>Save Profile</BtnPrimary>
+            <button
+              onClick={() => setEditing(false)}
+              className="px-5 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
