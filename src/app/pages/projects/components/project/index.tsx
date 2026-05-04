@@ -18,9 +18,9 @@ function Lightbox({ src, alt, onClose }: { src: string; alt: string; onClose: ()
             className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={onClose}
         >
-            <button className="absolute top-4 right-4 text-white/60 hover:text-white text-2xl leading-none">✕</button>
+            <button className="absolute top-4 right-4 text-white/40 hover:text-white text-xl leading-none">✕</button>
             <div className="relative max-w-5xl w-full max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <img src={src} alt={alt} className="w-full h-full object-contain rounded-2xl max-h-[90vh]" />
+                <img src={src} alt={alt} className="w-full h-full object-contain rounded-xl max-h-[90vh]" />
             </div>
         </div>
     );
@@ -50,21 +50,19 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
             onClick={onClose}
         >
             <div
-                className="relative bg-gray-900 border border-white/10 rounded-3xl w-full max-w-2xl overflow-y-auto max-h-[90vh] shadow-2xl"
+                className="relative bg-gray-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-y-auto max-h-[90vh] shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 pt-5 pb-3">
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
                     <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">{project.title}</p>
-                        <h3 className="text-white font-semibold text-lg mt-0.5">
+                        <p className="text-[10px] text-gray-600 uppercase tracking-widest font-medium">{project.title}</p>
+                        <h3 className="text-white font-semibold text-base mt-0.5">
                             {flow.title ?? `Step ${active + 1}`}
                         </h3>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">✕</button>
+                    <button onClick={onClose} className="text-gray-600 hover:text-white text-lg leading-none">✕</button>
                 </div>
 
-                {/* Image */}
                 {flow.imageUrl && (
                     <div
                         className="relative w-full bg-gray-800 cursor-zoom-in"
@@ -72,28 +70,23 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
                         onClick={() => setZoomedImg(flow.imageUrl!)}
                     >
                         <Image src={flow.imageUrl} alt={flow.title ?? ''} fill className="object-cover" />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
-                            <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">Click to expand</span>
-                        </div>
                     </div>
                 )}
 
-                {/* Description */}
                 {flow.description && (
-                    <p className="px-6 py-4 text-sm text-gray-400 leading-relaxed">{flow.description}</p>
+                    <p className="px-5 py-4 text-sm text-gray-500 leading-relaxed">{flow.description}</p>
                 )}
 
                 {zoomedImg && (
                     <Lightbox src={zoomedImg} alt={flow.title ?? ''} onClose={() => setZoomedImg(null)} />
                 )}
 
-                {/* Navigation */}
                 {flows.length > 1 && (
-                    <div className="flex items-center justify-between px-6 pb-5 pt-1">
+                    <div className="flex items-center justify-between px-5 pb-5 pt-1">
                         <button
                             onClick={() => setActive(v => Math.max(v - 1, 0))}
                             disabled={active === 0}
-                            className="text-sm text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
+                            className="text-xs text-gray-500 hover:text-white disabled:opacity-30 transition-colors"
                         >
                             ← Prev
                         </button>
@@ -102,14 +95,14 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
                                 <button
                                     key={i}
                                     onClick={() => setActive(i)}
-                                    className={`w-2 h-2 rounded-full transition-colors ${i === active ? 'bg-white' : 'bg-gray-600 hover:bg-gray-400'}`}
+                                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === active ? 'bg-white' : 'bg-gray-700 hover:bg-gray-500'}`}
                                 />
                             ))}
                         </div>
                         <button
                             onClick={() => setActive(v => Math.min(v + 1, flows.length - 1))}
                             disabled={active === flows.length - 1}
-                            className="text-sm text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
+                            className="text-xs text-gray-500 hover:text-white disabled:opacity-30 transition-colors"
                         >
                             Next →
                         </button>
@@ -124,17 +117,16 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
 function Project({ project }: { project: ProjectType }) {
     const [lightbox, setLightbox] = useState(false);
     const [flowsOpen, setFlowsOpen] = useState(false);
-    const [expandDesc, setExpandDesc] = useState(false);
     const hasFlows = Array.isArray(project.flows) && project.flows.length > 0;
-    const isLongDesc = (project.description?.length ?? 0) > 100;
 
     return (
         <>
-            <div className="group flex flex-col rounded-3xl overflow-hidden bg-gray-900 border border-white/5 hover:border-white/10 transition-all duration-300">
-                {/* Image */}
+            <div className="flex-shrink-0 w-[240px] sm:w-[260px] flex flex-col rounded-2xl overflow-hidden bg-gray-900/50 border border-white/[0.07] hover:border-white/[0.15] transition-colors duration-200 snap-start">
+
+                {/* Image — portrait */}
                 <div
-                    className="relative overflow-hidden cursor-zoom-in"
-                    style={{ aspectRatio: '4/3' }}
+                    className="relative overflow-hidden cursor-pointer"
+                    style={{ aspectRatio: '3/4' }}
                     onClick={() => project.coverImage && setLightbox(true)}
                 >
                     {project.coverImage ? (
@@ -143,97 +135,98 @@ function Project({ project }: { project: ProjectType }) {
                                 src={project.coverImage}
                                 alt={project.title}
                                 fill
-                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                className="object-cover object-top"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
-                                    Click to expand
-                                </span>
-                            </div>
+                            {/* Bottom gradient for legibility */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         </>
                     ) : (
-                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                            <span className="text-gray-600 text-4xl">✦</span>
+                        <div className="w-full h-full bg-gray-800/40 flex items-center justify-center">
+                            <span className="text-gray-700 text-2xl">✦</span>
                         </div>
                     )}
 
-                    <div className="absolute top-4 left-4 flex gap-2">
-                        {project.featured && (
-                            <span className="text-xs bg-white text-gray-900 font-semibold px-2.5 py-1 rounded-full">
+                    {/* Badges */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+                        {project.featured ? (
+                            <span className="text-[10px] bg-white text-gray-900 font-semibold px-2 py-0.5 rounded-full">
                                 Featured
                             </span>
+                        ) : (
+                            <span />
                         )}
-                        {project.status === 'in-progress' && (
-                            <span className="text-xs bg-yellow-400/90 text-gray-900 font-semibold px-2.5 py-1 rounded-full">
-                                In Progress
-                            </span>
+                        {project.year && (
+                            <span className="text-[10px] text-white/60">{project.year}</span>
                         )}
                     </div>
 
-                    {project.year && (
-                        <span className="absolute top-4 right-4 text-xs text-white/60 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                            {project.year}
-                        </span>
+                    {project.status === 'in-progress' && (
+                        <div className="absolute top-3 right-3">
+                            <span className="text-[10px] text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded-full">
+                                In Progress
+                            </span>
+                        </div>
                     )}
                 </div>
 
                 {/* Content */}
-                <div className="flex flex-col flex-1 p-5 gap-3">
+                <div className="flex flex-col flex-1 px-3.5 py-3 gap-2">
                     <div>
-                        <h2 className="text-white font-semibold text-lg leading-snug">{project.title}</h2>
+                        <h2 className="text-white font-semibold text-sm leading-snug line-clamp-1">
+                            {project.title}
+                        </h2>
                         {(project.role || project.company) && (
-                            <p className="text-gray-500 text-sm mt-0.5">
+                            <p className="text-gray-500 text-[11px] mt-0.5 truncate">
                                 {[project.role, project.company].filter(Boolean).join(' · ')}
                             </p>
                         )}
                     </div>
 
-                    {project.description && (
-                        <div>
-                            <p className={`text-gray-400 text-sm leading-relaxed ${!expandDesc && isLongDesc ? 'line-clamp-2' : ''}`}>
-                                {project.description}
-                            </p>
-                            {isLongDesc && (
-                                <button
-                                    onClick={() => setExpandDesc(v => !v)}
-                                    className="text-xs text-gray-500 hover:text-gray-300 mt-1 transition-colors"
+                    {/* Tech stack — max 3 tags */}
+                    {Array.isArray(project.techStack) && project.techStack.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                            {project.techStack.slice(0, 3).map(tech => (
+                                <span
+                                    key={tech}
+                                    className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
                                 >
-                                    {expandDesc ? 'Show less ▲' : 'Show more ▼'}
-                                </button>
+                                    {tech}
+                                </span>
+                            ))}
+                            {project.techStack.length > 3 && (
+                                <span className="text-[10px] text-gray-600 self-center">
+                                    +{project.techStack.length - 3}
+                                </span>
                             )}
                         </div>
                     )}
 
-                    {Array.isArray(project.techStack) && project.techStack.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                            {project.techStack.map(tech => (
-                                <span key={tech} className="text-xs text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
-                                    {tech}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-3 mt-auto pt-1 flex-wrap">
+                    {/* Actions */}
+                    <div className="flex items-center gap-3 mt-auto pt-0.5">
                         {project.demoUrl && (
-                            <Link href={project.demoUrl} target="_blank"
-                                className="text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full transition-colors">
-                                Live Demo
+                            <Link
+                                href={project.demoUrl}
+                                target="_blank"
+                                className="text-[11px] text-gray-300 hover:text-white transition-colors"
+                            >
+                                Demo ↗
                             </Link>
                         )}
                         {project.repoUrl && (
-                            <Link href={project.repoUrl} target="_blank"
-                                className="text-sm text-gray-400 hover:text-white transition-colors">
+                            <Link
+                                href={project.repoUrl}
+                                target="_blank"
+                                className="text-[11px] text-gray-600 hover:text-gray-300 transition-colors"
+                            >
                                 Source →
                             </Link>
                         )}
                         {hasFlows && (
                             <button
                                 onClick={() => setFlowsOpen(true)}
-                                className="ml-auto text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-full transition-colors"
+                                className="ml-auto text-[11px] text-gray-600 hover:text-gray-300 transition-colors"
                             >
-                                View {project.flows!.length} step{project.flows!.length > 1 ? 's' : ''} ▶
+                                {project.flows!.length} steps ▶
                             </button>
                         )}
                     </div>
@@ -243,7 +236,6 @@ function Project({ project }: { project: ProjectType }) {
             {lightbox && project.coverImage && (
                 <Lightbox src={project.coverImage} alt={project.title} onClose={() => setLightbox(false)} />
             )}
-
             {flowsOpen && hasFlows && (
                 <FlowsModal project={project} onClose={() => setFlowsOpen(false)} />
             )}

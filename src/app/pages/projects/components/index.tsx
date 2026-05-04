@@ -1,21 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchProjects } from '../services';
 import { ProjectType } from '../types';
 import Project from './project';
 
 function SkeletonCard() {
     return (
-        <div className="rounded-3xl overflow-hidden bg-gray-900 border border-white/5 animate-pulse">
-            <div className="bg-gray-800" style={{ aspectRatio: '4/3' }} />
-            <div className="p-5 space-y-3">
-                <div className="h-5 bg-gray-800 rounded-full w-2/3" />
-                <div className="h-3 bg-gray-800 rounded-full w-full" />
-                <div className="h-3 bg-gray-800 rounded-full w-4/5" />
-                <div className="flex gap-2 pt-1">
-                    <div className="h-6 w-20 bg-gray-800 rounded-full" />
-                    <div className="h-6 w-16 bg-gray-800 rounded-full" />
+        <div className="flex-shrink-0 w-[260px] rounded-2xl overflow-hidden bg-gray-900/40 border border-white/[0.07] animate-pulse snap-start">
+            <div className="bg-gray-800/60" style={{ aspectRatio: '3/4' }} />
+            <div className="px-4 py-3 space-y-2">
+                <div className="h-4 bg-gray-800/60 rounded-full w-3/4" />
+                <div className="h-3 bg-gray-800/40 rounded-full w-1/2" />
+                <div className="flex gap-1.5 pt-1">
+                    <div className="h-3 w-12 bg-gray-800/40 rounded-full" />
+                    <div className="h-3 w-10 bg-gray-800/40 rounded-full" />
                 </div>
             </div>
         </div>
@@ -25,6 +24,7 @@ function SkeletonCard() {
 const ProjectsPage = () => {
     const [projects, setProjects] = useState<ProjectType[]>([]);
     const [loading, setLoading] = useState(true);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchProjects().then(data => {
@@ -33,15 +33,12 @@ const ProjectsPage = () => {
         });
     }, []);
 
-    if (loading) {
-        return (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
-            </div>
-        );
-    }
+    const scroll = (dir: 'left' | 'right') => {
+        if (!scrollRef.current) return;
+        scrollRef.current.scrollBy({ left: dir === 'right' ? 280 : -280, behavior: 'smooth' });
+    };
 
-    if (projects.length === 0) {
+    if (!loading && projects.length === 0) {
         return (
             <div className="text-center py-24 text-gray-600">
                 <p className="text-5xl mb-4">✦</p>
@@ -51,8 +48,35 @@ const ProjectsPage = () => {
     }
 
     return (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map(p => <Project key={p.id} project={p} />)}
+        <div className="relative">
+            {/* Nav buttons */}
+            <div className="absolute -top-11 right-0 flex gap-2 z-10">
+                <button
+                    onClick={() => scroll('left')}
+                    className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors text-xs"
+                >
+                    ←
+                </button>
+                <button
+                    onClick={() => scroll('right')}
+                    className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors text-xs"
+                >
+                    →
+                </button>
+            </div>
+
+            {/* Scrollable strip */}
+            <div
+                ref={scrollRef}
+                className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ justifyContent: 'safe center' }}
+            >
+                {loading
+                    ? [...Array(4)].map((_, i) => <SkeletonCard key={i} />)
+                    : projects.map(p => <Project key={p.id} project={p} />)
+                }
+                <div className="flex-shrink-0 w-4" />
+            </div>
         </div>
     );
 };
