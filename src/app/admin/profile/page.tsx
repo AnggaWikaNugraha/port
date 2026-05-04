@@ -8,6 +8,7 @@ export default function AdminProfilePage() {
   const [interests, setInterests] = useState<any[]>([]);
   const [experiences, setExperiences] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [newInterest, setNewInterest] = useState("");
   const [newExp, setNewExp] = useState({ company: "", companyLogoUrl: "", location: "" });
@@ -22,12 +23,14 @@ export default function AdminProfilePage() {
       fetch("/api/admin/interests").then((r) => r.json()),
       fetch("/api/admin/experience").then((r) => r.json()),
       fetch("/api/admin/certificates").then((r) => r.json()),
-    ]).then(([u, s, i, e, c]) => {
+      fetch("/api/admin/projects").then((r) => r.json()),
+    ]).then(([u, s, i, e, c, p]) => {
       setUser(u);
       setSkills(Array.isArray(s) ? s : []);
       setInterests(Array.isArray(i) ? i : []);
       setExperiences(Array.isArray(e) ? e : []);
       setCertificates(Array.isArray(c) ? c : []);
+      setProjects(Array.isArray(p) ? p : []);
       setLoading(false);
     });
   }, []);
@@ -120,6 +123,7 @@ export default function AdminProfilePage() {
     { id: "interests", label: "Interests", icon: "❤️" },
     { id: "experience", label: "Experience", icon: "🏢" },
     { id: "certificates", label: "Certificates", icon: "🎓" },
+    { id: "projects", label: "Projects", icon: "🚀" },
   ];
 
   return (
@@ -184,6 +188,9 @@ export default function AdminProfilePage() {
               />
             </Card>
           )}
+          {activeTab === "projects" && (
+            <ProjectForm projects={projects} setProjects={setProjects} />
+          )}
         </div>
 
       </div>
@@ -240,6 +247,60 @@ function BtnDanger({ children, onClick }: any) {
     <button onClick={onClick} className="px-5 py-2 rounded-xl bg-red-600/80 hover:bg-red-600 text-white text-sm font-medium transition-colors">
       {children}
     </button>
+  );
+}
+
+/* =========================================================
+    IMAGE UPLOAD
+========================================================= */
+function ImageUpload({ value, onChange, label = "Image" }: { value: string; onChange: (url: string) => void; label?: string }) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) onChange(data.url);
+      else alert(data.error ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs text-gray-400">{label}</p>
+      <div className="flex items-center gap-3">
+        {value && (
+          <img src={value} alt="preview" className="w-14 h-14 rounded-xl object-cover bg-gray-800 shrink-0 border border-gray-700" />
+        )}
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <input
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Paste URL or upload file"
+            className="w-full rounded-xl px-3 py-2 text-sm bg-gray-900/60 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="self-start text-xs px-3 py-1.5 rounded-lg bg-gray-700/60 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+          >
+            {uploading ? "Uploading..." : "Upload screenshot"}
+          </button>
+        </div>
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </div>
   );
 }
 
@@ -722,57 +783,429 @@ function AddRoleForm({ experienceId, refreshLocal }: any) {
     CERTIFICATE FORM
 ========================================================= */
 function CertificateForm({ certificates, newCert, setNewCert, addCertificate, updateLocalCert, updateCertificate, deleteCertificate }: any) {
-  const [open, setOpen] = useState<any>(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const fmt = (d: string) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  };
 
   return (
-    <div className="space-y-5">
-      {/* ADD */}
-      <div className="rounded-xl border border-gray-700/60 bg-gray-900/40 p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Add New Certificate</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input placeholder="Title" value={newCert.title} onChange={(e: any) => setNewCert({ ...newCert, title: e.target.value })} />
-          <Input placeholder="Issuer" value={newCert.issuer} onChange={(e: any) => setNewCert({ ...newCert, issuer: e.target.value })} />
-          <Input type="date" label="Issue Date" value={newCert.issue_date} onChange={(e: any) => setNewCert({ ...newCert, issue_date: e.target.value })} />
-          <Input type="date" label="Expiration" value={newCert.expiration_date} onChange={(e: any) => setNewCert({ ...newCert, expiration_date: e.target.value })} />
+    <div className="space-y-4">
+
+      {/* ADD TOGGLE */}
+      <button
+        onClick={() => setShowAdd(!showAdd)}
+        className={`w-full rounded-xl border border-dashed px-4 py-3 text-sm font-medium transition-colors ${
+          showAdd ? "border-gray-600 text-gray-400 bg-gray-800/30" : "border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400"
+        }`}
+      >
+        {showAdd ? "✕ Cancel" : "+ Add New Certificate"}
+      </button>
+
+      {showAdd && (
+        <div className="rounded-xl border border-gray-700/60 bg-gray-900/40 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input placeholder="Title" value={newCert.title} onChange={(e: any) => setNewCert({ ...newCert, title: e.target.value })} />
+            <Input placeholder="Issuer" value={newCert.issuer} onChange={(e: any) => setNewCert({ ...newCert, issuer: e.target.value })} />
+            <Input type="date" label="Issue Date" value={newCert.issue_date} onChange={(e: any) => setNewCert({ ...newCert, issue_date: e.target.value })} />
+            <Input type="date" label="Expiration" value={newCert.expiration_date} onChange={(e: any) => setNewCert({ ...newCert, expiration_date: e.target.value })} />
+          </div>
+          <Input placeholder="Credential URL" value={newCert.credential_url} onChange={(e: any) => setNewCert({ ...newCert, credential_url: e.target.value })} />
+          <BtnPrimary onClick={() => { addCertificate(); setShowAdd(false); }}>Add Certificate</BtnPrimary>
         </div>
-        <Input placeholder="Credential URL" value={newCert.credential_url} onChange={(e: any) => setNewCert({ ...newCert, credential_url: e.target.value })} />
-        <BtnPrimary onClick={addCertificate}>Add Certificate</BtnPrimary>
-      </div>
+      )}
 
       {/* LIST */}
-      <div className="space-y-3">
-        {certificates.length === 0 && <p className="text-gray-500 text-sm">No certificates added yet.</p>}
-        {certificates.map((c: any) => (
-          <div key={c.id} className="rounded-xl border border-gray-700/60 bg-gray-900/30 overflow-hidden">
-            <div
-              onClick={() => setOpen(open === c.id ? null : c.id)}
-              className="px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-800/40 transition"
-            >
-              <div>
-                <p className="font-semibold text-white">{c.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{c.issuer}</p>
-              </div>
-              <span className="text-gray-500 text-xs">{open === c.id ? "▲" : "▼"}</span>
-            </div>
+      {certificates.length === 0 && <p className="text-gray-500 text-sm">No certificates added yet.</p>}
+      {certificates.map((c: any) => (
+        <CertItem
+          key={c.id}
+          cert={c}
+          fmt={fmt}
+          updateLocalCert={updateLocalCert}
+          updateCertificate={updateCertificate}
+          deleteCertificate={deleteCertificate}
+        />
+      ))}
+    </div>
+  );
+}
 
-            {open === c.id && (
-              <div className="px-5 pb-5 border-t border-gray-700/60 pt-4 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Title" value={c.title} onChange={(e: any) => updateLocalCert(c.id, "title", e.target.value)} />
-                  <Input label="Issuer" value={c.issuer} onChange={(e: any) => updateLocalCert(c.id, "issuer", e.target.value)} />
-                  <Input type="date" label="Issue Date" value={c.issue_date} onChange={(e: any) => updateLocalCert(c.id, "issue_date", e.target.value)} />
-                  <Input type="date" label="Expiration" value={c.expiration_date} onChange={(e: any) => updateLocalCert(c.id, "expiration_date", e.target.value)} />
-                </div>
-                <Input label="Credential URL" value={c.credential_url} onChange={(e: any) => updateLocalCert(c.id, "credential_url", e.target.value)} />
-                <div className="flex gap-3">
-                  <BtnSuccess onClick={() => updateCertificate(c)}>Update</BtnSuccess>
-                  <BtnDanger onClick={() => deleteCertificate(c.id)}>Delete</BtnDanger>
-                </div>
-              </div>
-            )}
+/* =========================================================
+    PROJECT FORM
+========================================================= */
+const STATUS_LABEL: Record<string, string> = {
+  completed: "Completed",
+  "in-progress": "In Progress",
+  archived: "Archived",
+};
+const STATUS_COLOR: Record<string, string> = {
+  completed: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  "in-progress": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  archived: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+};
+
+function ProjectForm({ projects, setProjects }: any) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newProj, setNewProj] = useState({
+    title: "", description: "", role: "", company: "",
+    techStack: "", year: "", status: "completed",
+    featured: false, isPrivate: false,
+    demoUrl: "", repoUrl: "", coverImage: "",
+  });
+
+  const dragItem = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+
+  const handleDragStart = (i: number) => { dragItem.current = i; setDraggingIdx(i); };
+  const handleDragEnter = (i: number) => { dragOver.current = i; setOverIdx(i); };
+  const handleDragEnd = () => {
+    if (dragItem.current !== null && dragOver.current !== null && dragItem.current !== dragOver.current) {
+      const reordered = [...projects];
+      const [moved] = reordered.splice(dragItem.current, 1);
+      reordered.splice(dragOver.current, 0, moved);
+      setProjects(reordered);
+      fetch("/api/admin/projects/reorder", { method: "POST", body: JSON.stringify({ ids: reordered.map((p: any) => p.id) }) });
+    }
+    dragItem.current = null; dragOver.current = null;
+    setDraggingIdx(null); setOverIdx(null);
+  };
+
+  const addProject = async () => {
+    if (!newProj.title.trim()) return;
+    await fetch("/api/admin/projects/create", {
+      method: "POST",
+      body: JSON.stringify({ ...newProj, techStack: newProj.techStack.split(",").map((t: string) => t.trim()).filter(Boolean) }),
+    });
+    const updated = await fetch("/api/admin/projects").then(r => r.json());
+    setProjects(Array.isArray(updated) ? updated : []);
+    setNewProj({ title: "", description: "", role: "", company: "", techStack: "", year: "", status: "completed", featured: false, isPrivate: false, demoUrl: "", repoUrl: "", coverImage: "" });
+    setShowAdd(false);
+  };
+
+  const updateLocalProject = (id: string, key: string, val: any) =>
+    setProjects((prev: any[]) => prev.map(p => p.id === id ? { ...p, [key]: val } : p));
+
+  const updateLocalFlow = (projId: string, flowId: string, key: string, val: any) =>
+    setProjects((prev: any[]) => prev.map(p => p.id === projId
+      ? { ...p, flows: p.flows.map((f: any) => f.id === flowId ? { ...f, [key]: val } : f) }
+      : p));
+
+  return (
+    <div className="space-y-4">
+      {/* ADD TOGGLE */}
+      <button
+        onClick={() => setShowAdd(!showAdd)}
+        className={`w-full rounded-xl border border-dashed px-4 py-3 text-sm font-medium transition-colors ${showAdd ? "border-gray-600 text-gray-400 bg-gray-800/30" : "border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400"}`}
+      >
+        {showAdd ? "✕ Cancel" : "+ Add New Project"}
+      </button>
+
+      {showAdd && (
+        <div className="rounded-xl border border-gray-700/60 bg-gray-900/40 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Title *" value={newProj.title} onChange={(e: any) => setNewProj({ ...newProj, title: e.target.value })} />
+            <Input label="Role" value={newProj.role} onChange={(e: any) => setNewProj({ ...newProj, role: e.target.value })} />
+            <Input label="Company" value={newProj.company} onChange={(e: any) => setNewProj({ ...newProj, company: e.target.value })} />
+            <Input label="Year" value={newProj.year} onChange={(e: any) => setNewProj({ ...newProj, year: e.target.value })} />
+            <Input label="Demo URL" value={newProj.demoUrl} onChange={(e: any) => setNewProj({ ...newProj, demoUrl: e.target.value })} />
+            <Input label="Repo URL" value={newProj.repoUrl} onChange={(e: any) => setNewProj({ ...newProj, repoUrl: e.target.value })} />
           </div>
-        ))}
+          <Input label="Tech Stack (comma separated)" value={newProj.techStack} onChange={(e: any) => setNewProj({ ...newProj, techStack: e.target.value })} />
+          <ImageUpload label="Cover Image" value={newProj.coverImage} onChange={(url) => setNewProj({ ...newProj, coverImage: url })} />
+          <Input label="Description" type="textarea" value={newProj.description} onChange={(e: any) => setNewProj({ ...newProj, description: e.target.value })} />
+          <div className="flex items-center gap-4 text-sm">
+            <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={newProj.featured} onChange={(e: any) => setNewProj({ ...newProj, featured: e.target.checked })} className="accent-blue-500" />
+              Featured
+            </label>
+            <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={newProj.isPrivate} onChange={(e: any) => setNewProj({ ...newProj, isPrivate: e.target.checked })} className="accent-blue-500" />
+              Private
+            </label>
+            <select
+              value={newProj.status}
+              onChange={(e: any) => setNewProj({ ...newProj, status: e.target.value })}
+              className="rounded-xl px-3 py-2 text-sm bg-gray-900/60 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            >
+              <option value="completed">Completed</option>
+              <option value="in-progress">In Progress</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <BtnPrimary onClick={addProject}>Add Project</BtnPrimary>
+        </div>
+      )}
+
+      {projects.length === 0 && <p className="text-gray-500 text-sm">No projects added yet.</p>}
+      {projects.map((proj: any, index: number) => (
+        <ProjectItem
+          key={proj.id}
+          proj={proj}
+          index={index}
+          draggingIdx={draggingIdx}
+          overIdx={overIdx}
+          onDragStart={handleDragStart}
+          onDragEnter={handleDragEnter}
+          onDragEnd={handleDragEnd}
+          updateLocalProject={updateLocalProject}
+          updateLocalFlow={updateLocalFlow}
+          setProjects={setProjects}
+        />
+      ))}
+      {projects.length > 1 && <p className="text-xs text-gray-600">Drag card untuk mengubah urutan</p>}
+    </div>
+  );
+}
+
+function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnter, onDragEnd, updateLocalProject, updateLocalFlow, setProjects }: any) {
+  const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [techInput, setTechInput] = useState((proj.techStack || []).join(", "));
+
+  const saveProject = async () => {
+    const payload = { ...proj, techStack: techInput.split(",").map((t: string) => t.trim()).filter(Boolean) };
+    await fetch("/api/admin/projects/update", { method: "POST", body: JSON.stringify(payload) });
+    updateLocalProject(proj.id, "techStack", payload.techStack);
+    setEditing(false);
+  };
+
+  const deleteProject = async () => {
+    await fetch("/api/admin/projects/delete", { method: "POST", body: JSON.stringify({ id: proj.id }) });
+    setProjects((prev: any[]) => prev.filter(p => p.id !== proj.id));
+  };
+
+  const addFlow = async (flow: any) => {
+    const res = await fetch("/api/admin/project-flows/create", { method: "POST", body: JSON.stringify({ ...flow, projectId: proj.id }) });
+    const { id } = await res.json();
+    updateLocalProject(proj.id, "flows", [...(proj.flows || []), { ...flow, id, sortOrder: (proj.flows || []).length }]);
+  };
+
+  const updateFlow = async (flow: any) => {
+    await fetch("/api/admin/project-flows/update", { method: "POST", body: JSON.stringify(flow) });
+  };
+
+  const deleteFlow = async (flowId: string) => {
+    await fetch("/api/admin/project-flows/delete", { method: "POST", body: JSON.stringify({ id: flowId }) });
+    updateLocalProject(proj.id, "flows", proj.flows.filter((f: any) => f.id !== flowId));
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={() => onDragStart(index)}
+      onDragEnter={() => onDragEnter(index)}
+      onDragEnd={onDragEnd}
+      onDragOver={(e: any) => e.preventDefault()}
+      className={`rounded-2xl border overflow-hidden transition-all select-none
+        ${draggingIdx === index ? "opacity-40 scale-95" : ""}
+        ${overIdx === index && draggingIdx !== index ? "border-blue-500 bg-blue-500/5" : "border-gray-700/60 bg-gray-900/30"}`}
+    >
+      {/* DISPLAY HEADER */}
+      <div className="px-5 py-4 flex gap-4 items-start">
+        <span className="text-gray-600 text-sm mt-1 cursor-grab">⠿</span>
+        {proj.coverImage && (
+          <img src={proj.coverImage} alt={proj.title} className="w-14 h-14 rounded-xl object-cover shrink-0 bg-gray-800" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-white">{proj.title}</p>
+            {proj.featured && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">⭐ Featured</span>}
+            {proj.isPrivate && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-400">🔒 Private</span>}
+            <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[proj.status] || STATUS_COLOR.completed}`}>
+              {STATUS_LABEL[proj.status] || proj.status}
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">{[proj.role, proj.company, proj.year].filter(Boolean).join(" · ")}</p>
+          {(proj.techStack || []).length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {proj.techStack.map((t: string) => (
+                <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-gray-700/60 text-gray-300">{t}</span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-3 mt-2">
+            {proj.demoUrl && <a href={proj.demoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">Demo →</a>}
+            {proj.repoUrl && <a href={proj.repoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">Repo →</a>}
+          </div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button onClick={() => setEditing(!editing)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700/60 text-gray-300 hover:bg-gray-700 transition-colors">
+            {editing ? "Done" : "✏️ Edit"}
+          </button>
+          <button onClick={() => setExpanded(!expanded)} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-300 transition-colors">
+            {expanded ? "▲" : "▼"}
+          </button>
+        </div>
       </div>
+
+      {/* EDIT FORM */}
+      {editing && (
+        <div className="px-5 pb-5 border-t border-gray-700/40 pt-4 space-y-3 bg-gray-800/20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Title" value={proj.title} onChange={(e: any) => updateLocalProject(proj.id, "title", e.target.value)} />
+            <Input label="Role" value={proj.role || ""} onChange={(e: any) => updateLocalProject(proj.id, "role", e.target.value)} />
+            <Input label="Company" value={proj.company || ""} onChange={(e: any) => updateLocalProject(proj.id, "company", e.target.value)} />
+            <Input label="Year" value={proj.year || ""} onChange={(e: any) => updateLocalProject(proj.id, "year", e.target.value)} />
+            <Input label="Demo URL" value={proj.demoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "demoUrl", e.target.value)} />
+            <Input label="Repo URL" value={proj.repoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "repoUrl", e.target.value)} />
+          </div>
+          <Input label="Tech Stack (comma separated)" value={techInput} onChange={(e: any) => setTechInput(e.target.value)} />
+          <ImageUpload label="Cover Image" value={proj.coverImage || ""} onChange={(url) => updateLocalProject(proj.id, "coverImage", url)} />
+          <Input label="Description" type="textarea" value={proj.description || ""} onChange={(e: any) => updateLocalProject(proj.id, "description", e.target.value)} />
+          <div className="flex items-center gap-4 text-sm">
+            <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={!!proj.featured} onChange={(e: any) => updateLocalProject(proj.id, "featured", e.target.checked)} className="accent-blue-500" />
+              Featured
+            </label>
+            <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={!!proj.isPrivate} onChange={(e: any) => updateLocalProject(proj.id, "isPrivate", e.target.checked)} className="accent-blue-500" />
+              Private
+            </label>
+            <select
+              value={proj.status || "completed"}
+              onChange={(e: any) => updateLocalProject(proj.id, "status", e.target.value)}
+              className="rounded-xl px-3 py-2 text-sm bg-gray-900/60 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            >
+              <option value="completed">Completed</option>
+              <option value="in-progress">In Progress</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div className="flex gap-3">
+            <BtnSuccess onClick={saveProject}>Save</BtnSuccess>
+            <BtnDanger onClick={deleteProject}>Delete</BtnDanger>
+          </div>
+        </div>
+      )}
+
+      {/* FLOWS */}
+      {expanded && (
+        <div className="border-t border-gray-700/40 bg-gray-900/20 px-5 py-4 space-y-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Flows</p>
+          {(proj.flows || []).map((flow: any) => (
+            <FlowItem key={flow.id} flow={flow} projId={proj.id} updateLocalFlow={updateLocalFlow} updateFlow={updateFlow} deleteFlow={deleteFlow} />
+          ))}
+          <AddFlowForm onAdd={addFlow} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FlowItem({ flow, projId, updateLocalFlow, updateFlow, deleteFlow }: any) {
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-gray-700/40 bg-gray-800/30 overflow-hidden">
+      <div className="px-4 py-3 flex gap-3 items-start">
+        {flow.imageUrl && (
+          <img src={flow.imageUrl} alt={flow.title} className="w-16 h-16 rounded-lg object-cover shrink-0 bg-gray-700" />
+        )}
+        <div className="flex-1 min-w-0">
+          {flow.title && <p className="text-sm font-medium text-white">{flow.title}</p>}
+          {flow.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{flow.description}</p>}
+        </div>
+        <button onClick={() => setEditing(!editing)} className="shrink-0 px-3 py-1.5 rounded-lg text-xs bg-gray-700/60 text-gray-300 hover:bg-gray-700 transition-colors">
+          {editing ? "Done" : "✏️"}
+        </button>
+      </div>
+      {editing && (
+        <div className="px-4 pb-4 border-t border-gray-700/40 pt-3 space-y-3 bg-gray-900/30">
+          <Input label="Title" value={flow.title || ""} onChange={(e: any) => updateLocalFlow(projId, flow.id, "title", e.target.value)} />
+          <ImageUpload label="Image" value={flow.imageUrl || ""} onChange={(url) => updateLocalFlow(projId, flow.id, "imageUrl", url)} />
+          <Input label="Description" type="textarea" value={flow.description || ""} onChange={(e: any) => updateLocalFlow(projId, flow.id, "description", e.target.value)} />
+          <div className="flex gap-3">
+            <BtnSuccess onClick={() => { updateFlow(flow); setEditing(false); }}>Save</BtnSuccess>
+            <BtnDanger onClick={() => deleteFlow(flow.id)}>Delete</BtnDanger>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddFlowForm({ onAdd }: any) {
+  const [open, setOpen] = useState(false);
+  const [flow, setFlow] = useState({ title: "", description: "", imageUrl: "" });
+
+  const submit = async () => {
+    await onAdd(flow);
+    setFlow({ title: "", description: "", imageUrl: "" });
+    setOpen(false);
+  };
+
+  if (!open) return (
+    <button onClick={() => setOpen(true)} className="w-full rounded-xl border border-dashed border-gray-700 text-gray-500 hover:text-gray-400 hover:border-gray-600 text-xs py-2.5 transition-colors">
+      + Add Flow
+    </button>
+  );
+
+  return (
+    <div className="rounded-xl border border-dashed border-gray-600/50 bg-gray-900/30 p-4 space-y-3">
+      <p className="text-xs font-medium text-gray-400">New Flow</p>
+      <Input label="Title" value={flow.title} onChange={(e: any) => setFlow({ ...flow, title: e.target.value })} />
+      <ImageUpload label="Image" value={flow.imageUrl} onChange={(url) => setFlow({ ...flow, imageUrl: url })} />
+      <Input label="Description" type="textarea" value={flow.description} onChange={(e: any) => setFlow({ ...flow, description: e.target.value })} />
+      <div className="flex gap-3">
+        <BtnPrimary onClick={submit}>Add Flow</BtnPrimary>
+        <button onClick={() => setOpen(false)} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function CertItem({ cert: c, fmt, updateLocalCert, updateCertificate, deleteCertificate }: any) {
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-gray-700/60 bg-gray-900/30 overflow-hidden">
+      {/* DISPLAY */}
+      <div className="px-5 py-4 flex items-start gap-4">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+          <span className="text-lg">🎓</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-white">{c.title}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{c.issuer}</p>
+          <div className="flex gap-3 mt-1.5 text-xs text-gray-500">
+            <span>Issued: {fmt(c.issue_date)}</span>
+            {c.expiration_date && <span>· Exp: {fmt(c.expiration_date)}</span>}
+          </div>
+          {c.credential_url && (
+            <a href={c.credential_url} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-400 hover:underline mt-1 inline-block">
+              View Credential →
+            </a>
+          )}
+        </div>
+        <button
+          onClick={() => setEditing(!editing)}
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700/60 text-gray-300 hover:bg-gray-700 transition-colors"
+        >
+          {editing ? "Done" : "✏️ Edit"}
+        </button>
+      </div>
+
+      {/* EDIT */}
+      {editing && (
+        <div className="px-5 pb-5 border-t border-gray-700/40 pt-4 space-y-3 bg-gray-800/20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Title" value={c.title} onChange={(e: any) => updateLocalCert(c.id, "title", e.target.value)} />
+            <Input label="Issuer" value={c.issuer} onChange={(e: any) => updateLocalCert(c.id, "issuer", e.target.value)} />
+            <Input type="date" label="Issue Date" value={c.issue_date} onChange={(e: any) => updateLocalCert(c.id, "issue_date", e.target.value)} />
+            <Input type="date" label="Expiration" value={c.expiration_date} onChange={(e: any) => updateLocalCert(c.id, "expiration_date", e.target.value)} />
+          </div>
+          <Input label="Credential URL" value={c.credential_url} onChange={(e: any) => updateLocalCert(c.id, "credential_url", e.target.value)} />
+          <div className="flex gap-3">
+            <BtnSuccess onClick={() => { updateCertificate(c); setEditing(false); }}>Save</BtnSuccess>
+            <BtnDanger onClick={() => deleteCertificate(c.id)}>Delete</BtnDanger>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

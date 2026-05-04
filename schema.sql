@@ -78,6 +78,39 @@ CREATE TABLE IF NOT EXISTS certificates (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS projects (
+  id            VARCHAR(50)     NOT NULL,
+  user_id       INT             NOT NULL,
+  title         VARCHAR(200)    NOT NULL,
+  description   TEXT            DEFAULT NULL,
+  role          VARCHAR(100)    DEFAULT NULL,
+  company       VARCHAR(100)    DEFAULT NULL,
+  tech_stack    JSON            DEFAULT NULL,
+  year          VARCHAR(10)     DEFAULT NULL,
+  status        ENUM('completed','in-progress','archived') DEFAULT 'completed',
+  featured      TINYINT(1)      DEFAULT 0,
+  sort_order    INT             DEFAULT 0,
+  is_private    TINYINT(1)      DEFAULT 0,
+  demo_url      VARCHAR(500)    DEFAULT NULL,
+  repo_url      VARCHAR(500)    DEFAULT NULL,
+  cover_image   VARCHAR(500)    DEFAULT NULL,
+  created_at    TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS project_flows (
+  id            VARCHAR(50)     NOT NULL,
+  project_id    VARCHAR(50)     NOT NULL,
+  title         VARCHAR(200)    DEFAULT NULL,
+  description   TEXT            DEFAULT NULL,
+  image_url     VARCHAR(500)    DEFAULT NULL,
+  sort_order    INT             DEFAULT 0,
+  PRIMARY KEY (id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
 -- ============================================================
 --  SEED: Admin user
 --  email    : angga@admin

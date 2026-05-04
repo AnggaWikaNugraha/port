@@ -1,46 +1,8 @@
 import { ProjectType } from '../types';
 
-export const mockProjects: ProjectType[] = [
-  {
-    id: '1',
-    title: 'Portfolio Website',
-    description: 'Personal portfolio to showcase projects and skills.',
-    ownerId: 'user123',
-    role: 'Frontend Developer',
-    company: 'Freelance',
-    techStack: ['Next.js', 'Tailwind CSS', 'TypeScript'],
-    year: '2024',
-    demoUrl: 'https://yourportfolio.com',
-    repoUrl: 'https://github.com/yourname/portfolio',
-    coverImage: 'http://tripjogja.co.id/wp-content/uploads/2017/04/Malioboro-01-1024x576.jpg',
-    createdAt: '2024-01-10T00:00:00Z',
-  },
-  {
-    id: '2',
-    title: 'Team Collaboration App',
-    description: 'Realtime app for task tracking & collaboration.',
-    ownerId: 'user123',
-    role: 'Fullstack Developer',
-    company: 'Startup Inc.',
-    techStack: ['React', 'Node.js', 'MongoDB', 'Socket.io'],
-    year: '2023',
-    demoUrl: '',
-    repoUrl: 'https://github.com/yourname/collab-app',
-    coverImage: 'http://tripjogja.co.id/wp-content/uploads/2017/04/Malioboro-01-1024x576.jpg',
-    createdAt: '2023-06-20T00:00:00Z',
-  },
-  {
-    id: '3',
-    title: 'Team Collaboration App',
-    description: 'Realtime app for task tracking & collaboration.',
-    ownerId: 'user123',
-    role: 'Fullstack Developer',
-    company: 'Startup Inc.',
-    techStack: ['React', 'Node.js', 'MongoDB', 'Socket.io'],
-    year: '2023',
-    demoUrl: '',
-    repoUrl: 'https://github.com/yourname/collab-app',
-    coverImage: 'http://tripjogja.co.id/wp-content/uploads/2017/04/Malioboro-01-1024x576.jpg',
-    createdAt: '2023-06-20T00:00:00Z',
-  },
-];
+export async function fetchProjects(): Promise<ProjectType[]> {
+    const res = await fetch('/api/public/projects');
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+}
