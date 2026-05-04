@@ -1,36 +1,166 @@
-This is a Next.js 15 (App Router) + Pure SQL (mysql2/promise).
+# Portfolio
+
+A full-stack personal portfolio website built with Next.js App Router, featuring a public-facing portfolio and a protected admin dashboard for managing content.
+
+## Features
+
+**Public Portfolio**
+- Home page with profile header, about section, and blog posts
+- About page with detailed professional info (skills, experience, education, certifications)
+- Projects showcase with tech stacks, live links, and project flow screenshots
+- Blog page
+- GitHub activity calendar
+
+**Admin Dashboard** (JWT protected)
+- Statistics overview
+- Full CRUD for: skills, interests, experience, education, projects, certificates
+- Profile editor (name, bio, avatar, contact info, job title)
+- Cloudinary image uploads
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | MySQL via `mysql2/promise` |
+| Auth | JWT + bcryptjs, HttpOnly cookies |
+| Images | Cloudinary CDN |
+| Icons | lucide-react, react-icons |
+| Markdown | react-markdown |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx                  # Home page
+│   ├── layout.tsx                # Root layout
+│   ├── globals.css               # Global styles
+│   ├── Layouts/MainLayout/       # Navbar wrapper
+│   ├── components/               # Shared components
+│   │   ├── navbar/
+│   │   └── homePage/             # header, about, postList
+│   ├── pages/
+│   │   ├── about/
+│   │   ├── blog/
+│   │   ├── projects/
+│   │   └── login/
+│   ├── admin/
+│   │   ├── dashboard/
+│   │   └── profile/
+│   └── api/
+│       ├── auth/                 # login, set-password
+│       ├── admin/                # protected CRUD endpoints
+│       ├── public/               # about, projects
+│       └── profile/              # get, update
+├── lib/
+│   └── db.ts                     # MySQL connection pool
+└── middleware.ts                 # JWT route protection
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- MySQL database
+- Cloudinary account
+
+### Installation
+
+```bash
+git clone <repository-url>
+cd port
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file at the root:
+
+```env
+# Database
+DB_HOST=your_mysql_host
+DB_USER=your_mysql_user
+DB_PASS=your_mysql_password
+DB_NAME=your_database_name
+
+# Authentication
+JWT_SECRET=your_jwt_secret_key
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+### Database Setup
+
+Import the SQL schema file to initialize your database:
+
+```bash
+mysql -u your_user -p your_database < u858890408_portfolio.sql
+```
+
+The schema includes tables for: `users`, `user_skills`, `user_interests`, `experience`, `education`, `certificates`, `projects`, `project_flows`, `roles`.
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev      # Start dev server with hot reload
+npm run build    # Build for production
+npm start        # Start production server
+npm run lint     # Run ESLint
+```
 
-## Learn More
+## API Endpoints
 
-To learn more about Next.js, take a look at the following resources:
+**Public**
+- `GET /api/public/about` — profile and portfolio data
+- `GET /api/public/projects` — projects with flow screenshots
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Auth**
+- `POST /api/auth/login` — login with email + password
+- `POST /api/auth/set-password` — set or update password
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Admin** (requires valid JWT cookie)
+- `GET|POST /api/admin/skills` — manage skills
+- `GET|POST /api/admin/interests` — manage interests
+- `GET|POST /api/admin/experience` — manage experience entries
+- `GET|POST /api/admin/certificates` — manage certificates
+- `GET|POST /api/admin/projects` — manage projects
+- `POST /api/admin/upload` — Cloudinary image upload
+- `GET /api/profile` — get admin profile
+- `POST /api/profile/update` — update profile info
 
-## Deploy on Vercel
+## Authentication Flow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Submit email + password at `/pages/login`
+2. Server validates credentials against the `users` table (bcrypt)
+3. JWT token issued with 1-day expiration
+4. Token stored in an HttpOnly, SameSite=Lax cookie
+5. Middleware validates the token on all `/admin/*` routes
+6. Invalid or missing token redirects to the login page
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+The recommended deployment target is [Vercel](https://vercel.com). Set all environment variables in the Vercel project settings before deploying.
+
+```bash
+npm run build
+```
+
+Make sure the following external image domains are allowed (already configured in `next.config.ts`):
+- `res.cloudinary.com`
+- `media.licdn.com`
+- `tripjogja.co.id`
