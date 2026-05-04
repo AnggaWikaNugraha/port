@@ -1,4 +1,5 @@
 import { CertificateType } from '../../_types';
+import { formatLongDate } from '@/lib/tgl';
 
 interface Props {
   certificates?: CertificateType[];
@@ -14,7 +15,10 @@ export default function CertificatesSection({ certificates }: Props) {
         {certificates.map(cert => (
           <li key={cert.id} className="text-sm">
             <p className="text-gray-200 font-medium">{cert.title} — <span className="text-gray-400">{cert.issuer}</span></p>
-            <p className="text-gray-400">Issued: {cert.issueDate}</p>
+            <p className="text-gray-400">
+              Issued: {formatLongDate(cert.issueDate)}
+              {cert.expirationDate && ` · Expires: ${formatLongDate(cert.expirationDate)}`}
+            </p>
             {cert.credentialUrl && (
               <a href={cert.credentialUrl} target="_blank" className="text-blue-400 hover:underline">View Credential</a>
             )}

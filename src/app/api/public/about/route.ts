@@ -85,6 +85,20 @@ export async function GET() {
       exp.roles = rolesRows; // ⬅ masukkan roles ke experience
     }
 
+    // GET CERTIFICATES
+    const [certRows]: any = await db.query(`
+      SELECT
+        id,
+        title,
+        issuer,
+        issue_date AS issueDate,
+        expiration_date AS expirationDate,
+        credential_url AS credentialUrl
+      FROM certificates
+      WHERE user_id = ?
+      ORDER BY issue_date DESC
+    `, [user.id]);
+
     return Response.json({
       ...user,
       social: {
@@ -96,9 +110,9 @@ export async function GET() {
       },
       skills,
       interests,
-      experience: expRows, // ⬅ HASIL AKHIR
+      experience: expRows,
       education: [],
-      certificates: [],
+      certificates: certRows,
     });
 
   } catch (err: any) {
