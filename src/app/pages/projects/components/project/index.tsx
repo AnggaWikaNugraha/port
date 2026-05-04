@@ -50,7 +50,7 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
             onClick={onClose}
         >
             <div
-                className="relative bg-gray-900 border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl"
+                className="relative bg-gray-900 border border-white/10 rounded-3xl w-full max-w-2xl overflow-y-auto max-h-[90vh] shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
