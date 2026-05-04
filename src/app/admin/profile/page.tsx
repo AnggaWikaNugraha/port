@@ -509,8 +509,9 @@ function InterestForm({ interests, setInterests, newInterest, setNewInterest, ad
     EXPERIENCE FORM
 ========================================================= */
 function ExperienceForm({ experiences, newExp, setNewExp, addExperience, updateLocalExp, updateExperience, deleteExperience }: any) {
-  const [openExp, setOpenExp] = useState<any>(null);
-  const [openRole, setOpenRole] = useState<any>(null);
+  const [expandedExp, setExpandedExp] = useState<string | null>(null);
+  const [editingExp, setEditingExp] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   function updateLocalRole(expId: string, roleId: string, key: string, value: any) {
     updateLocalExp(
@@ -520,91 +521,166 @@ function ExperienceForm({ experiences, newExp, setNewExp, addExperience, updateL
   }
 
   return (
-    <div className="space-y-5">
-      {/* ADD EXPERIENCE */}
-      <div className="rounded-xl border border-gray-700/60 bg-gray-900/40 p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Add New Experience</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input placeholder="Company name" value={newExp.company} onChange={(e: any) => setNewExp({ ...newExp, company: e.target.value })} />
-          <Input placeholder="Logo URL" value={newExp.companyLogoUrl} onChange={(e: any) => setNewExp({ ...newExp, companyLogoUrl: e.target.value })} />
-          <Input placeholder="Location" value={newExp.location} onChange={(e: any) => setNewExp({ ...newExp, location: e.target.value })} />
+    <div className="space-y-4">
+
+      {/* ADD EXPERIENCE TOGGLE */}
+      <button
+        onClick={() => setShowAdd(!showAdd)}
+        className={`w-full rounded-xl border border-dashed px-4 py-3 text-sm font-medium transition-colors ${
+          showAdd ? "border-gray-600 text-gray-400 bg-gray-800/30" : "border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400"
+        }`}
+      >
+        {showAdd ? "✕ Cancel" : "+ Add New Experience"}
+      </button>
+
+      {showAdd && (
+        <div className="rounded-xl border border-gray-700/60 bg-gray-900/40 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Input placeholder="Company name" value={newExp.company} onChange={(e: any) => setNewExp({ ...newExp, company: e.target.value })} />
+            <Input placeholder="Logo URL" value={newExp.companyLogoUrl} onChange={(e: any) => setNewExp({ ...newExp, companyLogoUrl: e.target.value })} />
+            <Input placeholder="Location" value={newExp.location} onChange={(e: any) => setNewExp({ ...newExp, location: e.target.value })} />
+          </div>
+          <BtnPrimary onClick={() => { addExperience(); setShowAdd(false); }}>Add Experience</BtnPrimary>
         </div>
-        <BtnPrimary onClick={addExperience}>Add Experience</BtnPrimary>
-      </div>
+      )}
 
-      {/* LIST */}
-      <div className="space-y-3">
-        {experiences.length === 0 && <p className="text-gray-500 text-sm">No experiences added yet.</p>}
-        {experiences.map((exp: any) => (
-          <div key={exp.id} className="rounded-xl border border-gray-700/60 bg-gray-900/30 overflow-hidden">
-            <div
-              className="px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-800/40 transition"
-              onClick={() => setOpenExp(openExp === exp.id ? null : exp.id)}
-            >
-              <div>
-                <p className="font-semibold text-white">{exp.company}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{exp.location}</p>
-              </div>
-              <span className="text-gray-500 text-xs">{openExp === exp.id ? "▲" : "▼"}</span>
-            </div>
+      {/* EXPERIENCE LIST */}
+      {experiences.length === 0 && <p className="text-gray-500 text-sm">No experiences added yet.</p>}
+      {experiences.map((exp: any) => (
+        <div key={exp.id} className="rounded-2xl border border-gray-700/60 bg-gray-900/30 overflow-hidden">
 
-            {openExp === exp.id && (
-              <div className="px-5 pb-5 border-t border-gray-700/60 pt-4 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input label="Company" value={exp.company} onChange={(e: any) => updateLocalExp(exp.id, "company", e.target.value)} />
-                  <Input label="Logo URL" value={exp.companyLogoUrl} onChange={(e: any) => updateLocalExp(exp.id, "companyLogoUrl", e.target.value)} />
-                  <Input label="Location" value={exp.location} onChange={(e: any) => updateLocalExp(exp.id, "location", e.target.value)} />
-                </div>
-                <div className="flex gap-3">
-                  <BtnSuccess onClick={() => updateExperience(exp)}>Update</BtnSuccess>
-                  <BtnDanger onClick={() => deleteExperience(exp.id)}>Delete</BtnDanger>
-                </div>
-
-                {/* ROLES */}
-                <div className="pt-2 space-y-3">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Roles</p>
-                  <AddRoleForm experienceId={exp.id} refreshLocal={updateLocalExp} />
-                  {exp.roles?.map((role: any) => (
-                    <div key={role.id} className="rounded-xl border border-gray-700/40 bg-gray-800/30 overflow-hidden">
-                      <div
-                        className="px-4 py-3 flex justify-between cursor-pointer hover:bg-gray-800/60 transition"
-                        onClick={() => setOpenRole(openRole === role.id ? null : role.id)}
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-white">{role.title}</p>
-                          <p className="text-xs text-gray-500">{role.employmentType}</p>
-                        </div>
-                        <span className="text-gray-500 text-xs">{openRole === role.id ? "▲" : "▼"}</span>
-                      </div>
-
-                      {openRole === role.id && (
-                        <div className="px-4 pb-4 pt-3 border-t border-gray-700/40 space-y-3">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <Input label="Title" value={role.title} onChange={(e: any) => updateLocalRole(exp.id, role.id, "title", e.target.value)} />
-                            <Input label="Employment Type" value={role.employmentType} onChange={(e: any) => updateLocalRole(exp.id, role.id, "employmentType", e.target.value)} />
-                            <Input type="date" label="Start Date" value={role.startDate} onChange={(e: any) => updateLocalRole(exp.id, role.id, "startDate", e.target.value)} />
-                            <Input type="date" label="End Date" value={role.endDate || ""} onChange={(e: any) => updateLocalRole(exp.id, role.id, "endDate", e.target.value)} />
-                          </div>
-                          <Input label="Description" type="textarea" value={role.description || ""} onChange={(e: any) => updateLocalRole(exp.id, role.id, "description", e.target.value)} />
-                          <div className="flex gap-3">
-                            <BtnSuccess onClick={() => fetch("/api/admin/roles/update", { method: "POST", body: JSON.stringify(role) })}>Update</BtnSuccess>
-                            <BtnDanger onClick={() => fetch("/api/admin/roles/delete", { method: "POST", body: JSON.stringify({ id: role.id }) })}>Delete</BtnDanger>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+          {/* DISPLAY HEADER */}
+          <div className="px-5 py-4 flex items-center gap-4">
+            {exp.companyLogoUrl ? (
+              <img src={exp.companyLogoUrl} alt={exp.company} className="w-11 h-11 rounded-xl object-contain bg-white p-1 shrink-0" />
+            ) : (
+              <div className="w-11 h-11 rounded-xl bg-gray-700 flex items-center justify-center shrink-0">
+                <span className="text-gray-400 text-lg">🏢</span>
               </div>
             )}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-white truncate">{exp.company}</p>
+              <p className="text-xs text-gray-400">{exp.location}</p>
+              <p className="text-xs text-gray-600 mt-0.5">{exp.roles?.length || 0} role{exp.roles?.length !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => { setEditingExp(editingExp === exp.id ? null : exp.id); setExpandedExp(exp.id); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700/60 text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                {editingExp === exp.id ? "Done" : "✏️ Edit"}
+              </button>
+              <button
+                onClick={() => setExpandedExp(expandedExp === exp.id ? null : exp.id)}
+                className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                {expandedExp === exp.id ? "▲" : "▼"}
+              </button>
+            </div>
           </div>
-        ))}
+
+          {/* EDIT FIELDS */}
+          {editingExp === exp.id && (
+            <div className="px-5 pb-4 border-t border-gray-700/40 pt-4 space-y-3 bg-gray-800/20">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Input label="Company" value={exp.company} onChange={(e: any) => updateLocalExp(exp.id, "company", e.target.value)} />
+                <Input label="Logo URL" value={exp.companyLogoUrl} onChange={(e: any) => updateLocalExp(exp.id, "companyLogoUrl", e.target.value)} />
+                <Input label="Location" value={exp.location} onChange={(e: any) => updateLocalExp(exp.id, "location", e.target.value)} />
+              </div>
+              <div className="flex gap-3">
+                <BtnSuccess onClick={() => { updateExperience(exp); setEditingExp(null); }}>Save</BtnSuccess>
+                <BtnDanger onClick={() => deleteExperience(exp.id)}>Delete</BtnDanger>
+              </div>
+            </div>
+          )}
+
+          {/* ROLES SECTION */}
+          {expandedExp === exp.id && (
+            <div className="border-t border-gray-700/40 bg-gray-900/20">
+              <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Roles</p>
+              </div>
+
+              {/* ROLE LIST */}
+              <div className="px-5 pb-4 space-y-2">
+                {exp.roles?.map((role: any) => (
+                  <RoleItem
+                    key={role.id}
+                    role={role}
+                    expId={exp.id}
+                    updateLocalRole={updateLocalRole}
+                  />
+                ))}
+
+                {/* ADD ROLE */}
+                <AddRoleForm experienceId={exp.id} refreshLocal={updateLocalExp} />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* =========================================================
+    ROLE ITEM — display + edit
+========================================================= */
+function RoleItem({ role, expId, updateLocalRole }: any) {
+  const [editing, setEditing] = useState(false);
+
+  const fmt = (d: string) => {
+    if (!d) return "Present";
+    const date = new Date(d);
+    return date.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-700/40 bg-gray-800/30 overflow-hidden">
+      {/* DISPLAY */}
+      <div className="px-4 py-3 flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-white">{role.title}</p>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-400">{role.employmentType}</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {fmt(role.startDate)} → {fmt(role.endDate)}
+          </p>
+          {role.description && (
+            <p className="text-xs text-gray-400 mt-1 line-clamp-2">{role.description}</p>
+          )}
+        </div>
+        <button
+          onClick={() => setEditing(!editing)}
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700/60 text-gray-300 hover:bg-gray-700 transition-colors"
+        >
+          {editing ? "Done" : "✏️"}
+        </button>
       </div>
+
+      {/* EDIT */}
+      {editing && (
+        <div className="px-4 pb-4 border-t border-gray-700/40 pt-3 space-y-3 bg-gray-900/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Title" value={role.title} onChange={(e: any) => updateLocalRole(expId, role.id, "title", e.target.value)} />
+            <Input label="Employment Type" value={role.employmentType} onChange={(e: any) => updateLocalRole(expId, role.id, "employmentType", e.target.value)} />
+            <Input type="date" label="Start Date" value={role.startDate} onChange={(e: any) => updateLocalRole(expId, role.id, "startDate", e.target.value)} />
+            <Input type="date" label="End Date" value={role.endDate || ""} onChange={(e: any) => updateLocalRole(expId, role.id, "endDate", e.target.value)} />
+          </div>
+          <Input label="Description" type="textarea" value={role.description || ""} onChange={(e: any) => updateLocalRole(expId, role.id, "description", e.target.value)} />
+          <div className="flex gap-3">
+            <BtnSuccess onClick={() => { fetch("/api/admin/roles/update", { method: "POST", body: JSON.stringify(role) }); setEditing(false); }}>Save</BtnSuccess>
+            <BtnDanger onClick={() => fetch("/api/admin/roles/delete", { method: "POST", body: JSON.stringify({ id: role.id }) })}>Delete</BtnDanger>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function AddRoleForm({ experienceId, refreshLocal }: any) {
+  const [open, setOpen] = useState(false);
   const [role, setRole] = useState({ title: "", employmentType: "", startDate: "", endDate: "", description: "" });
 
   const createRole = async () => {
@@ -612,11 +688,21 @@ function AddRoleForm({ experienceId, refreshLocal }: any) {
     const updated = await fetch("/api/admin/experience").then((r) => r.json());
     refreshLocal(experienceId, "roles", updated.find((x: any) => x.id === experienceId).roles);
     setRole({ title: "", employmentType: "", startDate: "", endDate: "", description: "" });
+    setOpen(false);
   };
+
+  if (!open) return (
+    <button
+      onClick={() => setOpen(true)}
+      className="w-full rounded-xl border border-dashed border-gray-700 text-gray-500 hover:text-gray-400 hover:border-gray-600 text-xs py-2.5 transition-colors"
+    >
+      + Add Role
+    </button>
+  );
 
   return (
     <div className="rounded-xl border border-dashed border-gray-600/50 bg-gray-900/30 p-4 space-y-3">
-      <p className="text-xs text-gray-500">Add role</p>
+      <p className="text-xs font-medium text-gray-400">New Role</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input placeholder="Role Title" value={role.title} onChange={(e: any) => setRole({ ...role, title: e.target.value })} />
         <Input placeholder="Employment Type" value={role.employmentType} onChange={(e: any) => setRole({ ...role, employmentType: e.target.value })} />
@@ -624,7 +710,10 @@ function AddRoleForm({ experienceId, refreshLocal }: any) {
         <Input type="date" label="End" value={role.endDate} onChange={(e: any) => setRole({ ...role, endDate: e.target.value })} />
       </div>
       <Input type="textarea" placeholder="Description" value={role.description} onChange={(e: any) => setRole({ ...role, description: e.target.value })} />
-      <BtnPrimary onClick={createRole}>Add Role</BtnPrimary>
+      <div className="flex gap-3">
+        <BtnPrimary onClick={createRole}>Add Role</BtnPrimary>
+        <button onClick={() => setOpen(false)} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Cancel</button>
+      </div>
     </div>
   );
 }
