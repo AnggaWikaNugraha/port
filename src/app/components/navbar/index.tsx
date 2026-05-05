@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, Languages } from 'lucide-react';
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -42,6 +42,18 @@ const Navbar = () => {
             >
               <User className="w-4 h-4" />
               Profile
+            </Link>
+
+            <Link
+              href="/admin/language"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                pathname === '/admin/language'
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              Language
             </Link>
 
             <button

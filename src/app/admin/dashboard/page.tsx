@@ -13,6 +13,7 @@ import {
   Globe,
   FileText,
   FolderOpen,
+  Languages,
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -110,6 +111,13 @@ export default function Dashboard() {
       icon: FolderOpen,
       color: "from-amber-600 to-orange-600",
       external: true,
+    },
+    {
+      label: "Language Lab",
+      desc: "Manage your private EN/ID learning dictionary",
+      href: "/admin/language",
+      icon: Languages,
+      color: "from-emerald-600 to-lime-600",
     },
   ];
 
