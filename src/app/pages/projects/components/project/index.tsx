@@ -16,8 +16,6 @@ function Project({ project }: { project: ProjectType }) {
     const visibleTech = showAllTech ? techStack : techStack.slice(0, 3);
     const hiddenCount = techStack.length - 3;
     const detailHref = `/pages/projects/${project.id}`;
-    const flowCount = project.flows?.length ?? 0;
-
     return (
         <div
             className="flex cursor-pointer gap-4 py-6 sm:gap-8"
@@ -111,9 +109,9 @@ function Project({ project }: { project: ProjectType }) {
                     <Link
                         href={detailHref}
                         onClick={e => e.stopPropagation()}
-                        className="text-[11px] text-gray-600 hover:text-gray-300 transition-colors"
+                        className="rounded-full border border-white/[0.08] px-3 py-1 text-[11px] text-gray-500 transition-colors hover:border-white/[0.16] hover:text-gray-300"
                     >
-                        {flowCount > 0 ? `${flowCount} flows →` : 'View details →'}
+                        Detail
                     </Link>
                 </div>
             </div>
