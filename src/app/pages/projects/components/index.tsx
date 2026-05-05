@@ -1,22 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchProjects } from '../services';
 import { ProjectType } from '../types';
 import Project from './project';
 
-function SkeletonCard() {
+function SkeletonRow() {
     return (
-        <div className="flex-shrink-0 w-[260px] rounded-2xl overflow-hidden bg-gray-900/40 border border-white/[0.07] animate-pulse snap-start">
-            <div className="bg-gray-800/60" style={{ aspectRatio: '3/4' }} />
-            <div className="px-4 py-3 space-y-2">
-                <div className="h-4 bg-gray-800/60 rounded-full w-3/4" />
-                <div className="h-3 bg-gray-800/40 rounded-full w-1/2" />
-                <div className="flex gap-1.5 pt-1">
-                    <div className="h-3 w-12 bg-gray-800/40 rounded-full" />
-                    <div className="h-3 w-10 bg-gray-800/40 rounded-full" />
+        <div className="flex gap-4 sm:gap-6 py-6 animate-pulse">
+            <div className="flex-1 flex flex-col gap-2">
+                <div className="h-3 bg-gray-800/60 rounded-full w-1/3" />
+                <div className="h-5 bg-gray-800/60 rounded-full w-4/5" />
+                <div className="h-4 bg-gray-800/40 rounded-full w-full" />
+                <div className="h-4 bg-gray-800/40 rounded-full w-3/4" />
+                <div className="flex gap-1.5 mt-1">
+                    <div className="h-4 w-14 bg-gray-800/40 rounded-full" />
+                    <div className="h-4 w-12 bg-gray-800/40 rounded-full" />
+                    <div className="h-4 w-16 bg-gray-800/40 rounded-full" />
                 </div>
             </div>
+            <div className="flex-shrink-0 w-48 h-32 rounded-xl bg-gray-800/60" />
         </div>
     );
 }
@@ -24,7 +27,6 @@ function SkeletonCard() {
 const ProjectsPage = () => {
     const [projects, setProjects] = useState<ProjectType[]>([]);
     const [loading, setLoading] = useState(true);
-    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchProjects().then(data => {
@@ -33,12 +35,15 @@ const ProjectsPage = () => {
         });
     }, []);
 
-    const scroll = (dir: 'left' | 'right') => {
-        if (!scrollRef.current) return;
-        scrollRef.current.scrollBy({ left: dir === 'right' ? 280 : -280, behavior: 'smooth' });
-    };
+    if (loading) {
+        return (
+            <div className="divide-y divide-white/[0.05]">
+                {[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}
+            </div>
+        );
+    }
 
-    if (!loading && projects.length === 0) {
+    if (projects.length === 0) {
         return (
             <div className="text-center py-24 text-gray-600">
                 <p className="text-5xl mb-4">✦</p>
@@ -48,35 +53,8 @@ const ProjectsPage = () => {
     }
 
     return (
-        <div className="relative">
-            {/* Nav buttons */}
-            <div className="absolute -top-11 right-0 flex gap-2 z-10">
-                <button
-                    onClick={() => scroll('left')}
-                    className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors text-xs"
-                >
-                    ←
-                </button>
-                <button
-                    onClick={() => scroll('right')}
-                    className="w-8 h-8 rounded-full bg-white/5 border border-white/[0.08] hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors text-xs"
-                >
-                    →
-                </button>
-            </div>
-
-            {/* Scrollable strip */}
-            <div
-                ref={scrollRef}
-                className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                style={{ justifyContent: 'safe center' }}
-            >
-                {loading
-                    ? [...Array(4)].map((_, i) => <SkeletonCard key={i} />)
-                    : projects.map(p => <Project key={p.id} project={p} />)
-                }
-                <div className="flex-shrink-0 w-4" />
-            </div>
+        <div className="divide-y divide-white/[0.05]">
+            {projects.map(p => <Project key={p.id} project={p} />)}
         </div>
     );
 };

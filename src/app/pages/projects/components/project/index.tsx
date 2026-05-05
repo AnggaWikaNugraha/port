@@ -113,101 +113,77 @@ function FlowsModal({ project, onClose }: { project: ProjectType; onClose: () =>
     );
 }
 
-/* ── Project Card ─────────────────────────────────────── */
+/* ── Project Row (Medium-style) ───────────────────────── */
 function Project({ project }: { project: ProjectType }) {
     const [lightbox, setLightbox] = useState(false);
     const [flowsOpen, setFlowsOpen] = useState(false);
+    const [showAllTech, setShowAllTech] = useState(false);
+    const [showFullDesc, setShowFullDesc] = useState(false);
+    const isLongDesc = (project.description?.length ?? 0) > 120;
     const hasFlows = Array.isArray(project.flows) && project.flows.length > 0;
+    const techStack = project.techStack ?? [];
+    const visibleTech = showAllTech ? techStack : techStack.slice(0, 3);
+    const hiddenCount = techStack.length - 3;
 
     return (
         <>
-            <div className="flex-shrink-0 w-[240px] sm:w-[260px] flex flex-col rounded-2xl overflow-hidden bg-gray-900/50 border border-white/[0.07] hover:border-white/[0.15] transition-colors duration-200 snap-start">
+            <div className="flex gap-4 sm:gap-8 py-6">
 
-                {/* Image — portrait */}
-                <div
-                    className="relative overflow-hidden cursor-pointer"
-                    style={{ aspectRatio: '3/4' }}
-                    onClick={() => project.coverImage && setLightbox(true)}
-                >
-                    {project.coverImage ? (
-                        <>
-                            <Image
-                                src={project.coverImage}
-                                alt={project.title}
-                                fill
-                                className="object-cover object-top"
-                            />
-                            {/* Bottom gradient for legibility */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        </>
-                    ) : (
-                        <div className="w-full h-full bg-gray-800/40 flex items-center justify-center">
-                            <span className="text-gray-700 text-2xl">✦</span>
-                        </div>
-                    )}
+                {/* Left: content */}
+                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
 
-                    {/* Badges */}
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-                        {project.featured ? (
-                            <span className="text-[10px] bg-white text-gray-900 font-semibold px-2 py-0.5 rounded-full">
-                                Featured
-                            </span>
-                        ) : (
-                            <span />
-                        )}
-                        {project.year && (
-                            <span className="text-[10px] text-white/60">{project.year}</span>
-                        )}
-                    </div>
-
-                    {project.status === 'in-progress' && (
-                        <div className="absolute top-3 right-3">
-                            <span className="text-[10px] text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded-full">
-                                In Progress
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col flex-1 px-3.5 py-3 gap-2">
-                    <div>
-                        <h2 className="text-white font-semibold text-sm leading-snug line-clamp-1">
-                            {project.title}
-                        </h2>
+                    {/* Publication line + year + featured */}
+                    <div className="flex items-center gap-2 flex-wrap">
                         {(project.role || project.company) && (
-                            <p className="text-gray-500 text-[11px] mt-0.5 truncate">
+                            <p className="text-xs text-gray-600">
                                 {[project.role, project.company].filter(Boolean).join(' · ')}
                             </p>
                         )}
+                        {project.year && (
+                            <span className="text-[10px] text-gray-700 tabular-nums">· {project.year}</span>
+                        )}
+                        {project.featured && (
+                            <span className="text-[10px] text-gray-500 bg-white/[0.06] px-2 py-px rounded-full">
+                                Featured
+                            </span>
+                        )}
+                        {project.status === 'in-progress' && (
+                            <span className="text-[10px] text-yellow-600">In Progress</span>
+                        )}
                     </div>
 
-                    {/* Tech stack — max 3 tags */}
-                    {Array.isArray(project.techStack) && project.techStack.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                            {project.techStack.slice(0, 3).map(tech => (
-                                <span
-                                    key={tech}
-                                    className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
+                    {/* Title */}
+                    <h2 className="text-white font-bold text-base sm:text-lg leading-snug line-clamp-2">
+                        {project.title}
+                    </h2>
+
+                    {/* Description */}
+                    {project.description && (
+                        <div className="flex flex-col items-start gap-1">
+                            <p className={`text-gray-500 text-sm leading-relaxed sm:block hidden ${!showFullDesc && isLongDesc ? 'line-clamp-2' : ''}`}>
+                                {project.description}
+                            </p>
+                            <p className={`text-gray-500 text-xs leading-relaxed sm:hidden ${!showFullDesc && isLongDesc ? 'line-clamp-2' : ''}`}>
+                                {project.description}
+                            </p>
+                            {isLongDesc && (
+                                <button
+                                    onClick={() => setShowFullDesc(v => !v)}
+                                    className="block text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
                                 >
-                                    {tech}
-                                </span>
-                            ))}
-                            {project.techStack.length > 3 && (
-                                <span className="text-[10px] text-gray-600 self-center">
-                                    +{project.techStack.length - 3}
-                                </span>
+                                    {showFullDesc ? 'Show less' : 'Show more'}
+                                </button>
                             )}
                         </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 mt-auto pt-0.5">
+                    {/* Actions — bottom left */}
+                    <div className="flex items-center gap-3 mt-auto pt-2 flex-wrap">
                         {project.demoUrl && (
                             <Link
                                 href={project.demoUrl}
                                 target="_blank"
-                                className="text-[11px] text-gray-300 hover:text-white transition-colors"
+                                className="text-[11px] text-gray-400 hover:text-white transition-colors"
                             >
                                 Demo ↗
                             </Link>
@@ -224,11 +200,65 @@ function Project({ project }: { project: ProjectType }) {
                         {hasFlows && (
                             <button
                                 onClick={() => setFlowsOpen(true)}
-                                className="ml-auto text-[11px] text-gray-600 hover:text-gray-300 transition-colors"
+                                className="text-[11px] text-gray-600 hover:text-gray-300 transition-colors"
                             >
                                 {project.flows!.length} steps ▶
                             </button>
                         )}
+                    </div>
+                </div>
+
+                {/* Right: thumbnail + meta */}
+                <div className="flex-shrink-0 w-48 flex flex-col gap-2 self-start mt-5">
+                    {project.coverImage && (
+                        <div
+                            className="w-48 h-32 overflow-hidden cursor-pointer bg-gray-800/40"
+                            style={{ borderRadius: '2px' }}
+                            onClick={() => setLightbox(true)}
+                        >
+                            <Image
+                                src={project.coverImage}
+                                alt={project.title}
+                                width={192}
+                                height={128}
+                                className="w-full h-full object-cover object-top"
+                            />
+                        </div>
+                    )}
+
+                    {/* Tech stack + meta below image */}
+                    <div className="flex flex-col gap-1.5">
+                        {techStack.length > 0 && (
+                            <div className="flex flex-col items-start gap-1.5">
+                                <div className="flex flex-wrap gap-1 items-center">
+                                    {visibleTech.map(tech => (
+                                        <span
+                                            key={tech}
+                                            className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
+                                        >
+                                            {tech}
+                                        </span>
+                                    ))}
+                                </div>
+                                {!showAllTech && hiddenCount > 0 && (
+                                    <button
+                                        onClick={() => setShowAllTech(true)}
+                                        className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                                    >
+                                        Show +{hiddenCount} more
+                                    </button>
+                                )}
+                                {showAllTech && hiddenCount > 0 && (
+                                    <button
+                                        onClick={() => setShowAllTech(false)}
+                                        className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                                    >
+                                        Show less
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </div>
