@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPublicProjectById } from '@/lib/projects';
+import ProjectMarkdown from '../components/projectMarkdown';
 
 type ProjectDetailPageProps = {
     params: Promise<{ id: string }>;
@@ -34,9 +35,10 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                             {project.title}
                         </h1>
                         {project.description && (
-                            <p className="max-w-3xl text-sm leading-7 text-gray-400 sm:text-lg">
-                                {project.description}
-                            </p>
+                            <ProjectMarkdown
+                                content={project.description}
+                                className="max-w-3xl text-sm sm:text-lg [&_p]:leading-7 [&_ul]:leading-7 [&_ol]:leading-7"
+                            />
                         )}
                     </div>
 
@@ -127,9 +129,10 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                                 )}
 
                                 {flow.description && (
-                                    <p className="max-w-3xl text-sm leading-7 text-gray-400 sm:text-base">
-                                        {flow.description}
-                                    </p>
+                                    <ProjectMarkdown
+                                        content={flow.description}
+                                        className="max-w-3xl text-sm sm:text-base [&_p]:leading-7 [&_ul]:leading-7 [&_ol]:leading-7"
+                                    />
                                 )}
                             </section>
                         ))

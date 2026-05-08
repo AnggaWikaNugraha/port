@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { KeyboardEvent, MouseEvent, useState } from 'react';
+import ProjectMarkdown, { normalizeProjectMarkdown } from '../projectMarkdown';
 import { ProjectType } from '../../types';
 
 /* ── Project Row (Medium-style) ───────────────────────── */
@@ -11,21 +12,41 @@ function Project({ project }: { project: ProjectType }) {
     const router = useRouter();
     const [showAllTech, setShowAllTech] = useState(false);
     const [showFullDesc, setShowFullDesc] = useState(false);
-    const isLongDesc = (project.description?.length ?? 0) > 120;
+    const normalizedDescription = project.description ? normalizeProjectMarkdown(project.description) : '';
+    const isLongDesc = normalizedDescription.length > 220 || normalizedDescription.split('\n').length > 5;
     const techStack = project.techStack ?? [];
     const visibleTech = showAllTech ? techStack : techStack.slice(0, 3);
     const hiddenCount = techStack.length - 3;
     const detailHref = `/pages/projects/${project.id}`;
+
+    const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLElement;
+
+        if (target.closest('a, button')) {
+            return;
+        }
+
+        router.push(detailHref);
+    };
+
+    const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLElement;
+
+        if (target.closest('a, button')) {
+            return;
+        }
+
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            router.push(detailHref);
+        }
+    };
+
     return (
         <div
             className="flex cursor-pointer gap-4 py-6 sm:gap-8"
-            onClick={() => router.push(detailHref)}
-            onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    router.push(detailHref);
-                }
-            }}
+            onClick={handleCardClick}
+            onKeyDown={handleCardKeyDown}
             role="link"
             tabIndex={0}
         >
@@ -63,17 +84,19 @@ function Project({ project }: { project: ProjectType }) {
                 {/* Description */}
                 {project.description && (
                     <div className="flex flex-col items-start gap-1">
-                        <p className={`text-gray-500 text-sm leading-relaxed sm:block hidden ${!showFullDesc && isLongDesc ? 'line-clamp-2' : ''}`}>
-                            {project.description}
-                        </p>
-                        <p className={`text-gray-500 text-xs leading-relaxed sm:hidden ${!showFullDesc && isLongDesc ? 'line-clamp-2' : ''}`}>
-                            {project.description}
-                        </p>
+                        <div className={`relative w-full overflow-hidden ${showFullDesc ? '' : 'max-h-32 sm:max-h-36'}`}>
+                            <ProjectMarkdown
+                                content={project.description}
+                                className="text-xs sm:text-sm [&_p]:text-gray-500 [&_ul]:text-gray-500 [&_ol]:text-gray-500 [&_li]:text-gray-500 [&_h1]:text-gray-300 [&_h2]:text-gray-300 [&_h3]:text-gray-300 [&_strong]:text-gray-300"
+                            />
+                            {!showFullDesc && isLongDesc && (
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-gray-950 to-transparent" />
+                            )}
+                        </div>
                         {isLongDesc && (
                             <button
                                 type="button"
-                                onClick={e => {
-                                    e.stopPropagation();
+                                onClick={() => {
                                     setShowFullDesc(v => !v);
                                 }}
                                 className="block text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
@@ -151,8 +174,7 @@ function Project({ project }: { project: ProjectType }) {
                             {!showAllTech && hiddenCount > 0 && (
                                 <button
                                     type="button"
-                                    onClick={e => {
-                                        e.stopPropagation();
+                                    onClick={() => {
                                         setShowAllTech(true);
                                     }}
                                     className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
@@ -163,8 +185,7 @@ function Project({ project }: { project: ProjectType }) {
                             {showAllTech && hiddenCount > 0 && (
                                 <button
                                     type="button"
-                                    onClick={e => {
-                                        e.stopPropagation();
+                                    onClick={() => {
                                         setShowAllTech(false);
                                     }}
                                     className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
