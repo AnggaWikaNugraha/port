@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPublicProjectById } from '@/lib/projects';
 import ProjectMarkdown from '../components/projectMarkdown';
+import ZoomableImage from './ZoomableImage';
 
 type ProjectDetailPageProps = {
     params: Promise<{ id: string }>;
@@ -75,15 +75,13 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
                 {project.coverImage && (
                     <div className="overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.03]">
-                        <div className="relative aspect-[16/10] w-full sm:aspect-[16/9]">
-                            <Image
-                                src={project.coverImage}
-                                alt={project.title}
-                                fill
-                                className="object-cover object-top"
-                                priority
-                            />
-                        </div>
+                        <ZoomableImage
+                            src={project.coverImage}
+                            alt={project.title}
+                            aspectClass="aspect-[16/10] sm:aspect-[16/9]"
+                            className="object-cover object-top"
+                            priority
+                        />
                     </div>
                 )}
 
@@ -117,14 +115,12 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
                                 {flow.imageUrl && (
                                     <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-                                        <div className="relative aspect-[16/10] w-full sm:aspect-[16/9]">
-                                            <Image
-                                                src={flow.imageUrl}
-                                                alt={flow.title ?? `${project.title} flow ${index + 1}`}
-                                                fill
-                                                className="object-cover object-top"
-                                            />
-                                        </div>
+                                        <ZoomableImage
+                                            src={flow.imageUrl}
+                                            alt={flow.title ?? `${project.title} flow ${index + 1}`}
+                                            aspectClass="aspect-[16/10] sm:aspect-[16/9]"
+                                            className="object-cover object-top"
+                                        />
                                     </div>
                                 )}
 
