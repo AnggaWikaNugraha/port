@@ -79,6 +79,9 @@ const Navbar = () => {
           <Link href="/pages/blog" className={`hover:text-gray-400 ${pathname === '/pages/blog' ? 'underline' : ''}`}>
             Blog
           </Link>
+          <Link href="/pages/language" className={`hover:text-gray-400 ${pathname === '/pages/language' ? 'underline' : ''}`}>
+            Language
+          </Link>
           <Link href="/pages/projects" className={`hover:text-gray-400 ${pathname === '/pages/projects' ? 'underline' : ''}`}>
             Projects
           </Link>
