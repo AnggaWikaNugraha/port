@@ -74,7 +74,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 </div>
 
                 {project.coverImage && (
-                    <div className="overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.03]">
+                    <div className="overflow-hidden border border-white/[0.08] bg-white/[0.03]" style={{ borderRadius: '4px' }}>
                         <ZoomableImage
                             src={project.coverImage}
                             alt={project.title}
@@ -114,7 +114,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                                 </div>
 
                                 {flow.imageUrl && (
-                                    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+                                    <div className="overflow-hidden border border-white/[0.08] bg-white/[0.03]" style={{ borderRadius: '4px' }}>
                                         <ZoomableImage
                                             src={flow.imageUrl}
                                             alt={flow.title ?? `${project.title} flow ${index + 1}`}
