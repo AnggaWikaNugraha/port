@@ -21,21 +21,13 @@ function Project({ project }: { project: ProjectType }) {
 
     const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
         const target = event.target as HTMLElement;
-
-        if (target.closest('a, button')) {
-            return;
-        }
-
+        if (target.closest('a, button')) return;
         router.push(detailHref);
     };
 
     const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
         const target = event.target as HTMLElement;
-
-        if (target.closest('a, button')) {
-            return;
-        }
-
+        if (target.closest('a, button')) return;
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             router.push(detailHref);
@@ -44,7 +36,7 @@ function Project({ project }: { project: ProjectType }) {
 
     return (
         <div
-            className="flex cursor-pointer gap-4 py-6 sm:gap-8"
+            className="flex flex-col-reverse cursor-pointer rounded-[4px] overflow-hidden bg-gray-900/50 border border-white/[0.07] sm:flex-row sm:gap-8 sm:py-6 sm:rounded-none sm:overflow-visible sm:bg-transparent sm:border-0"
             onClick={handleCardClick}
             onKeyDown={handleCardKeyDown}
             role="link"
@@ -52,7 +44,7 @@ function Project({ project }: { project: ProjectType }) {
         >
 
             {/* Left: content */}
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5 px-4 pt-3 pb-4 sm:px-0 sm:pt-0 sm:pb-0">
 
                 {/* Publication line + year + featured */}
                 <div className="flex items-center gap-2 flex-wrap">
@@ -96,12 +88,42 @@ function Project({ project }: { project: ProjectType }) {
                         {isLongDesc && (
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setShowFullDesc(v => !v);
-                                }}
+                                onClick={() => { setShowFullDesc(v => !v); }}
                                 className="block text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
                             >
                                 {showFullDesc ? 'Show less' : 'Show more'}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Tech stack — mobile only */}
+                {techStack.length > 0 && (
+                    <div className="flex flex-wrap gap-1 items-center sm:hidden">
+                        {visibleTech.map(tech => (
+                            <span
+                                key={tech}
+                                className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
+                            >
+                                {tech}
+                            </span>
+                        ))}
+                        {!showAllTech && hiddenCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => { setShowAllTech(true); }}
+                                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                            >
+                                +{hiddenCount} more
+                            </button>
+                        )}
+                        {showAllTech && hiddenCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => { setShowAllTech(false); }}
+                                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                            >
+                                Show less
                             </button>
                         )}
                     </div>
@@ -140,11 +162,11 @@ function Project({ project }: { project: ProjectType }) {
             </div>
 
             {/* Right: thumbnail + meta */}
-            <div className="flex-shrink-0 w-48 flex flex-col gap-2 self-start mt-5">
+            <div className="w-full sm:flex-shrink-0 sm:w-48 sm:flex sm:flex-col sm:gap-2 sm:self-start sm:mt-5">
                 {project.coverImage && (
                     <Link
                         href={detailHref}
-                        className="block w-48 h-32 overflow-hidden bg-gray-800/40"
+                        className="block w-full h-44 overflow-hidden bg-gray-800/40 sm:w-48 sm:h-32"
                         style={{ borderRadius: '2px' }}
                     >
                         <Image
@@ -157,8 +179,8 @@ function Project({ project }: { project: ProjectType }) {
                     </Link>
                 )}
 
-                {/* Tech stack + meta below image */}
-                <div className="flex flex-col gap-1.5">
+                {/* Tech stack — desktop only */}
+                <div className="hidden sm:flex sm:flex-col sm:gap-1.5">
                     {techStack.length > 0 && (
                         <div className="flex flex-col items-start gap-1.5">
                             <div className="flex flex-wrap gap-1 items-center">
@@ -174,9 +196,7 @@ function Project({ project }: { project: ProjectType }) {
                             {!showAllTech && hiddenCount > 0 && (
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setShowAllTech(true);
-                                    }}
+                                    onClick={() => { setShowAllTech(true); }}
                                     className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
                                 >
                                     Show +{hiddenCount} more
@@ -185,9 +205,7 @@ function Project({ project }: { project: ProjectType }) {
                             {showAllTech && hiddenCount > 0 && (
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setShowAllTech(false);
-                                    }}
+                                    onClick={() => { setShowAllTech(false); }}
                                     className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
                                 >
                                     Show less
