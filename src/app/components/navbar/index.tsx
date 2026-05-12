@@ -76,17 +76,17 @@ const Navbar = () => {
           Home
         </Link>
         <div className="space-x-6 text-sm">
-          <Link href="/pages/blog" className={`hover:text-gray-400 ${pathname === '/pages/blog' ? 'underline' : ''}`}>
-            Blog
-          </Link>
-          <Link href="/pages/language" className={`hover:text-gray-400 ${pathname === '/pages/language' ? 'underline' : ''}`}>
-            Language
-          </Link>
           <Link href="/pages/projects" className={`hover:text-gray-400 ${pathname === '/pages/projects' ? 'underline' : ''}`}>
             Projects
           </Link>
+          <Link href="/pages/blog" className={`hover:text-gray-400 ${pathname === '/pages/blog' ? 'underline' : ''}`}>
+            Blog
+          </Link>
           <Link href="/pages/about" className={`hover:text-gray-400 ${pathname === '/pages/about' ? 'underline' : ''}`}>
             About
+          </Link>
+          <Link href="/pages/language" className={`hover:text-gray-400 ${pathname === '/pages/language' ? 'underline' : ''}`}>
+            Language
           </Link>
         </div>
       </div>
