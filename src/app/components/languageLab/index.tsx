@@ -78,42 +78,31 @@ function PublicEntryCard({ entry }: { entry: LanguageEntry }) {
         )}
       </div>
 
-      <h2 className="mt-4 text-lg font-semibold text-white">{entry.sourceText}</h2>
+      <h2 className="mt-4 text-lg font-bold text-white">{entry.sourceText}</h2>
 
-      <div className="mt-4 space-y-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Meaning</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-gray-300">
-            {entry.meanings.map((meaning, index) => (
-              <li key={`${entry.id}-meaning-${index}`} className="flex gap-3">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
-                <span>{meaning}</span>
-              </li>
-            ))}
-          </ul>
+      <p className="mt-2 text-sm text-gray-300">
+        {entry.meanings.join(' • ')}
+      </p>
+
+      {(entry.exampleSource || entry.exampleTarget || entry.notes) && (
+        <div className="mt-4 space-y-3 border-t border-gray-800 pt-3">
+          {entry.exampleSource && (
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Example</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-300">{entry.exampleSource}</p>
+            </div>
+          )}
+          {entry.exampleTarget && (
+            <p className="whitespace-pre-wrap text-sm leading-6 text-gray-400 italic">{entry.exampleTarget}</p>
+          )}
+          {entry.notes && (
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Notes</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-400">{entry.notes}</p>
+            </div>
+          )}
         </div>
-
-        {entry.exampleSource && (
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Example Source</p>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-300">{entry.exampleSource}</p>
-          </div>
-        )}
-
-        {entry.exampleTarget && (
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Example Target</p>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-300">{entry.exampleTarget}</p>
-          </div>
-        )}
-
-        {entry.notes && (
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Notes</p>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-400">{entry.notes}</p>
-          </div>
-        )}
-      </div>
+      )}
 
       <p className="mt-4 text-xs text-gray-500">
         Updated {new Date(entry.updatedAt || entry.createdAt).toLocaleString('id-ID')}
@@ -447,7 +436,7 @@ export default function LanguageLab({ mode }: { mode: LanguageLabMode }) {
         .toLowerCase();
 
       return haystack.includes(lowerQuery);
-    });
+    }).sort((a, b) => a.sourceText.localeCompare(b.sourceText));
   }, [direction, entries, query, selectedTag]);
 
   return (
