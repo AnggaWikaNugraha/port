@@ -66,21 +66,21 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 
 function PublicEntryCard({ entry }: { entry: LanguageEntry }) {
   return (
-    <article className="rounded-3xl border border-gray-800 bg-gray-900/60 p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+    <article className="rounded-2xl border border-gray-800/60 bg-gray-900/40 p-4">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
           {directionLabel(entry.sourceLang, entry.targetLang)}
         </span>
         {entry.tags.length > 0 && (
-          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-gray-400">
+          <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-0.5 text-xs text-gray-500">
             {entry.tags.join(', ')}
           </span>
         )}
       </div>
 
-      <h2 className="mt-4 text-lg font-bold text-white">{entry.sourceText}</h2>
+      <h2 className="mt-3 text-base font-bold text-white">{entry.sourceText}</h2>
 
-      <p className="mt-2 text-sm text-gray-300">
+      <p className="mt-1.5 text-sm text-gray-300">
         {entry.meanings.join(' • ')}
       </p>
 
@@ -104,7 +104,7 @@ function PublicEntryCard({ entry }: { entry: LanguageEntry }) {
         </div>
       )}
 
-      <p className="mt-4 text-xs text-gray-500">
+      <p className="mt-3 text-xs text-gray-600">
         Updated {new Date(entry.updatedAt || entry.createdAt).toLocaleString('id-ID')}
       </p>
     </article>
@@ -328,6 +328,91 @@ function EditableEntryCard({
   );
 }
 
+function AlphabetSections({
+  entries,
+  isAdmin,
+  onSave,
+  onDelete,
+}: {
+  entries: LanguageEntry[];
+  isAdmin: boolean;
+  onSave: (entry: LanguageEntry) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const grouped = entries.reduce<Record<string, LanguageEntry[]>>((acc, entry) => {
+    const letter = entry.sourceText[0]?.toUpperCase() ?? '#';
+    if (!acc[letter]) acc[letter] = [];
+    acc[letter].push(entry);
+    return acc;
+  }, {});
+
+  const letters = Object.keys(grouped).sort();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const allCollapsed = letters.every(l => collapsed[l]);
+
+  const toggle = (letter: string) =>
+    setCollapsed(prev => ({ ...prev, [letter]: !prev[letter] }));
+
+  const toggleAll = () => {
+    if (allCollapsed) {
+      setCollapsed({});
+    } else {
+      setCollapsed(Object.fromEntries(letters.map(l => [l, true])));
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-700 px-3 py-1.5 rounded-full transition-colors"
+        >
+          {allCollapsed ? 'Expand all ▼' : 'Collapse all ▲'}
+        </button>
+      </div>
+      {letters.map(letter => {
+        const isOpen = !collapsed[letter];
+        const items = grouped[letter];
+        return (
+          <div key={letter}>
+            {/* Section header */}
+            <button
+              type="button"
+              onClick={() => toggle(letter)}
+              className="w-full flex items-center gap-4 py-2 group"
+            >
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg w-8 h-8 flex items-center justify-center shrink-0">
+                {letter}
+              </span>
+              <span className="flex-1 h-px bg-gray-800 group-hover:bg-gray-700 transition-colors" />
+              <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors">
+                {items.length} {items.length === 1 ? 'entry' : 'entries'}
+              </span>
+              <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors">
+                {isOpen ? '▲' : '▼'}
+              </span>
+            </button>
+
+            {isOpen && (
+              <div className="mt-2 mb-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {items.map(entry =>
+                  isAdmin ? (
+                    <EditableEntryCard key={entry.id} entry={entry} onSave={onSave} onDelete={onDelete} />
+                  ) : (
+                    <PublicEntryCard key={entry.id} entry={entry} />
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function LanguageLab({ mode }: { mode: LanguageLabMode }) {
   const isAdmin = mode === 'admin';
   const [entries, setEntries] = useState<LanguageEntry[]>([]);
@@ -544,20 +629,12 @@ export default function LanguageLab({ mode }: { mode: LanguageLabMode }) {
               <p className="text-sm text-gray-400">Belum ada entri yang cocok.</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredEntries.map((entry) =>
-                isAdmin ? (
-                  <EditableEntryCard
-                    key={entry.id}
-                    entry={entry}
-                    onSave={handleUpdate}
-                    onDelete={handleDelete}
-                  />
-                ) : (
-                  <PublicEntryCard key={entry.id} entry={entry} />
-                ),
-              )}
-            </div>
+            <AlphabetSections
+              entries={filteredEntries}
+              isAdmin={isAdmin}
+              onSave={handleUpdate}
+              onDelete={handleDelete}
+            />
           )}
         </section>
       </div>
