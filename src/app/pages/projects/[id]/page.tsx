@@ -79,7 +79,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                             src={project.coverImage}
                             alt={project.title}
                             aspectClass="aspect-[16/10] sm:aspect-[16/9]"
-                            className="object-cover object-top"
+                            className="object-contain"
                             priority
                         />
                     </div>
@@ -119,7 +119,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                                             src={flow.imageUrl}
                                             alt={flow.title ?? `${project.title} flow ${index + 1}`}
                                             aspectClass="aspect-[16/10] sm:aspect-[16/9]"
-                                            className="object-cover object-top"
+                                            className="object-contain"
                                         />
                                     </div>
                                 )}
