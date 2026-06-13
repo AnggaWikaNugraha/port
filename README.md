@@ -265,69 +265,25 @@ GET /api/public/language  (read-only, no auth)
               └─ Entry list   (sourceText, meanings[], example, notes)
                     ⚠ mode="public" → form tambah/edit/hapus tidak ditampilkan
 ```
-
-### Admin Language
+### Blog `/pages/blog`
 
 ```
-Admin visits language admin page
+User visits /pages/blog
       |
       ▼
-middleware.ts — verify JWT cookie
-      |
-      ├─→ Invalid / no token    → redirect login page
-      |
-      └─→ Valid
-              |
-              ▼
-GET /api/admin/language
+  getBlogFeed()  ← hardcoded static data (no API call)
       |
       ▼
-ensureLanguageEntriesTable()  ← CREATE TABLE IF NOT EXISTS
+  setTimeout 1000ms  (simulated loading)
       |
-      ▼
-SELECT language_entries WHERE user_id=1
-ORDER BY updated_at DESC, created_at DESC
+      ├─→ posts set to []   → "No posts available."
       |
-      ▼
-Response {
-  entries[],       ← meanings & tags parsed from JSON
-  availableTags[], ← unique tags, sorted A-Z
-  stats: { entries, meanings, tags }
-}
-      |
-      ▼
-Render LanguageLab (mode="admin")
-    ├─ Stats cards  (entries, meanings, tags)
-    ├─ Search bar   (filter by sourceText, meanings, tags, example, notes)
-    ├─ Direction filter  (All / EN→ID / ID→EN)
-    ├─ Tag filter   (filter by availableTags)
-    ├─ [+ Tambah] button → open create form
-    └─ Entry list grouped A-Z  (click card → edit modal)
-
-── Create Entry ──────────────────────────────────────────
-  [Simpan]
-  POST /api/admin/language/create
-  { sourceText, sourceLang, targetLang, meanings[],
-    exampleSource?, exampleTarget?, notes?, tags[] }
-      └─→ { success: true, id }
-              └─→ refresh GET /api/admin/language
-
-── Edit Entry  (modal) ───────────────────────────────────
-  [Save]
-  POST /api/admin/language/update
-  { id, sourceText, sourceLang, targetLang, meanings[],
-    exampleSource?, exampleTarget?, notes?, tags[] }
-      └─→ { success: true }
-              └─→ refresh GET /api/admin/language
-
-── Delete Entry (modal) ──────────────────────────────────
-  [Delete]
-  POST /api/admin/language/delete  { id }
-      └─→ { success: true }
-              └─→ refresh GET /api/admin/language
+      └─→ (future) posts[]  → Render BlogCard list
 ```
 
 ### Admin Dashboard
+
+![Admin Dashboard](./public/ss/admin%20dashboard.png)
 
 ```
 Admin visits dashboard
@@ -361,6 +317,8 @@ middleware.ts — verify JWT cookie (token)
 ```
 
 ### Admin Profile
+
+![Admin Profile](./public/ss/admin%20profile.png)
 
 ```
 Admin visits profile page
@@ -446,21 +404,67 @@ middleware.ts — verify JWT cookie
   POST /api/admin/upload  multipart/form-data { file }
       └─→ { url }  (Cloudinary CDN URL)
 ```
+### Admin Language
 
-### Blog `/pages/blog`
+![Admin Language](./public/ss/admin%20language.png)
 
 ```
-User visits /pages/blog
+Admin visits language admin page
       |
       ▼
-  getBlogFeed()  ← hardcoded static data (no API call)
+middleware.ts — verify JWT cookie
+      |
+      ├─→ Invalid / no token    → redirect login page
+      |
+      └─→ Valid
+              |
+              ▼
+GET /api/admin/language
       |
       ▼
-  setTimeout 1000ms  (simulated loading)
+ensureLanguageEntriesTable()  ← CREATE TABLE IF NOT EXISTS
       |
-      ├─→ posts set to []   → "No posts available."
+      ▼
+SELECT language_entries WHERE user_id=1
+ORDER BY updated_at DESC, created_at DESC
       |
-      └─→ (future) posts[]  → Render BlogCard list
+      ▼
+Response {
+  entries[],       ← meanings & tags parsed from JSON
+  availableTags[], ← unique tags, sorted A-Z
+  stats: { entries, meanings, tags }
+}
+      |
+      ▼
+Render LanguageLab (mode="admin")
+    ├─ Stats cards  (entries, meanings, tags)
+    ├─ Search bar   (filter by sourceText, meanings, tags, example, notes)
+    ├─ Direction filter  (All / EN→ID / ID→EN)
+    ├─ Tag filter   (filter by availableTags)
+    ├─ [+ Tambah] button → open create form
+    └─ Entry list grouped A-Z  (click card → edit modal)
+
+── Create Entry ──────────────────────────────────────────
+  [Simpan]
+  POST /api/admin/language/create
+  { sourceText, sourceLang, targetLang, meanings[],
+    exampleSource?, exampleTarget?, notes?, tags[] }
+      └─→ { success: true, id }
+              └─→ refresh GET /api/admin/language
+
+── Edit Entry  (modal) ───────────────────────────────────
+  [Save]
+  POST /api/admin/language/update
+  { id, sourceText, sourceLang, targetLang, meanings[],
+    exampleSource?, exampleTarget?, notes?, tags[] }
+      └─→ { success: true }
+              └─→ refresh GET /api/admin/language
+
+── Delete Entry (modal) ──────────────────────────────────
+  [Delete]
+  POST /api/admin/language/delete  { id }
+      └─→ { success: true }
+              └─→ refresh GET /api/admin/language
 ```
 
 ## API Endpoints
