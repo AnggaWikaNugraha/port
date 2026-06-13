@@ -966,6 +966,30 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
   const [expanded, setExpanded] = useState(false);
   const [techInput, setTechInput] = useState((proj.techStack || []).join(", "));
 
+  const dragFlowItem = useRef<number | null>(null);
+  const dragFlowOver = useRef<number | null>(null);
+  const [draggingFlowIdx, setDraggingFlowIdx] = useState<number | null>(null);
+  const [overFlowIdx, setOverFlowIdx] = useState<number | null>(null);
+
+  const handleFlowDragStart = (i: number) => { dragFlowItem.current = i; setDraggingFlowIdx(i); };
+  const handleFlowDragEnter = (i: number) => { dragFlowOver.current = i; setOverFlowIdx(i); };
+  const handleFlowDragEnd = () => {
+    if (dragFlowItem.current !== null && dragFlowOver.current !== null && dragFlowItem.current !== dragFlowOver.current) {
+      const flows = [...(proj.flows || [])];
+      const [moved] = flows.splice(dragFlowItem.current, 1);
+      flows.splice(dragFlowOver.current, 0, moved);
+      updateLocalProject(proj.id, "flows", flows);
+      fetch("/api/admin/project-flows/reorder", {
+        method: "POST",
+        body: JSON.stringify({ ids: flows.map((f: any) => f.id) }),
+      });
+    }
+    dragFlowItem.current = null;
+    dragFlowOver.current = null;
+    setDraggingFlowIdx(null);
+    setOverFlowIdx(null);
+  };
+
   const saveProject = async () => {
     const payload = { ...proj, techStack: techInput.split(",").map((t: string) => t.trim()).filter(Boolean) };
     await fetch("/api/admin/projects/update", { method: "POST", body: JSON.stringify(payload) });
@@ -1086,8 +1110,21 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
       {expanded && (
         <div className="border-t border-gray-700/40 bg-gray-900/20 px-5 py-4 space-y-3">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Flows</p>
-          {(proj.flows || []).map((flow: any) => (
-            <FlowItem key={flow.id} flow={flow} projId={proj.id} updateLocalFlow={updateLocalFlow} updateFlow={updateFlow} deleteFlow={deleteFlow} />
+          {(proj.flows || []).map((flow: any, fi: number) => (
+            <FlowItem
+              key={flow.id}
+              flow={flow}
+              projId={proj.id}
+              index={fi}
+              draggingFlowIdx={draggingFlowIdx}
+              overFlowIdx={overFlowIdx}
+              onFlowDragStart={handleFlowDragStart}
+              onFlowDragEnter={handleFlowDragEnter}
+              onFlowDragEnd={handleFlowDragEnd}
+              updateLocalFlow={updateLocalFlow}
+              updateFlow={updateFlow}
+              deleteFlow={deleteFlow}
+            />
           ))}
           <AddFlowForm onAdd={addFlow} />
         </div>
@@ -1096,14 +1133,24 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
   );
 }
 
-function FlowItem({ flow, projId, updateLocalFlow, updateFlow, deleteFlow }: any) {
+function FlowItem({ flow, projId, index, draggingFlowIdx, overFlowIdx, onFlowDragStart, onFlowDragEnter, onFlowDragEnd, updateLocalFlow, updateFlow, deleteFlow }: any) {
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-700/40 bg-gray-800/30 overflow-hidden">
+    <div
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); onFlowDragStart(index); }}
+      onDragEnter={(e) => { e.stopPropagation(); onFlowDragEnter(index); }}
+      onDragEnd={(e) => { e.stopPropagation(); onFlowDragEnd(); }}
+      onDragOver={(e) => e.preventDefault()}
+      className={`rounded-xl border overflow-hidden transition-all select-none
+        ${draggingFlowIdx === index ? "opacity-40 scale-95" : ""}
+        ${overFlowIdx === index && draggingFlowIdx !== index ? "border-blue-500 bg-blue-500/5" : "border-gray-700/40 bg-gray-800/30"}`}
+    >
       <div className="px-4 py-3 flex gap-3 items-start">
+        <span className="text-gray-500 cursor-grab active:cursor-grabbing mt-1 shrink-0">⠿</span>
         {flow.imageUrl && (
-          <img src={flow.imageUrl} alt={flow.title} className="w-16 h-16 rounded-lg object-cover shrink-0 bg-gray-700" />
+          <img src={flow.imageUrl} alt={flow.title} className="w-16 h-16 rounded-lg object-contain shrink-0 bg-gray-700" />
         )}
         <div className="flex-1 min-w-0">
           {flow.title && <p className="text-sm font-medium text-white">{flow.title}</p>}
