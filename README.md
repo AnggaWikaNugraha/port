@@ -91,6 +91,8 @@ src/
 
 ### User Home `/`
 
+![Home](./public/ss/home.png)
+
 ```
 User visits /
       |
@@ -126,6 +128,8 @@ User visits /
 
 ### Projects `/pages/projects`
 
+![Projects](./public/ss/projects.png)
+
 ```
 User visits /pages/projects
       |
@@ -155,6 +159,8 @@ GET /api/public/projects
 ```
 
 ### Project Detail `/pages/projects/[id]`
+
+![Project Detail](./public/ss/projects%20details.png)
 
 ```
 User visits /pages/projects/[id]
@@ -186,6 +192,8 @@ getPublicProjectById(id)  ← server-side (lib/projects.ts)
 ```
 
 ### About `/pages/about`
+
+![About](./public/ss/about.png)
 
 ```
 User visits /pages/about
@@ -222,6 +230,8 @@ GET /api/public/about
 ```
 
 ### Language `/pages/language`
+
+![Language](./public/ss/language.png)
 
 ```
 User visits /pages/language
