@@ -1,44 +1,44 @@
 # Portfolio
 
-**English** · [Bahasa Indonesia](./README.id.md)
+[English](./README.md) · **Bahasa Indonesia**
 
-A full-stack personal portfolio website built with Next.js 15 App Router, MySQL, and JWT authentication. Features a public portfolio (projects with flow breakdowns, blog, about, language lab) and a protected admin dashboard for managing content — including drag-to-reorder for projects and flows, image uploads via Cloudinary, and a zoomable image viewer.
+Website portofolio pribadi full-stack yang dibangun dengan Next.js 15 App Router, MySQL, dan autentikasi JWT. Menyediakan portofolio publik (proyek beserta rincian flow, blog, about, language lab) dan dashboard admin terproteksi untuk mengelola konten — termasuk drag-to-reorder untuk proyek dan flow, upload gambar via Cloudinary, serta penampil gambar yang bisa di-zoom.
 
-## Project Structure
+## Struktur Proyek
 
 ```
 src/
 ├── app/
-│   ├── page.tsx                        # Home page
+│   ├── page.tsx                        # Halaman home
 │   ├── layout.tsx                      # Root layout + metadata
 │   ├── globals.css
-│   ├── icon.svg                        # Favicon (AW monogram)
-│   ├── Layouts/MainLayout/             # Navbar wrapper
+│   ├── icon.svg                        # Favicon (monogram AW)
+│   ├── Layouts/MainLayout/             # Pembungkus navbar
 │   ├── components/
-│   │   ├── navbar/                     # Top navigation
+│   │   ├── navbar/                     # Navigasi atas
 │   │   ├── homePage/                   # header, about, postList
-│   │   └── languageLab/               # Language lab UI
+│   │   └── languageLab/                # UI language lab
 │   ├── pages/
-│   │   ├── about/                      # Public about page
-│   │   ├── blog/                       # Public blog page
-│   │   ├── language/                   # Public language lab
-│   │   ├── login/                      # Login page
+│   │   ├── about/                      # Halaman about publik
+│   │   ├── blog/                       # Halaman blog publik
+│   │   ├── language/                   # Language lab publik
+│   │   ├── login/                      # Halaman login
 │   │   └── projects/
 │   │       ├── [id]/
-│   │       │   ├── page.tsx            # Project detail
-│   │       │   └── ZoomableImage.tsx   # Click-to-zoom image viewer
-│   │       ├── components/             # Project list + card
+│   │       │   ├── page.tsx            # Detail proyek
+│   │       │   └── ZoomableImage.tsx   # Penampil gambar klik-untuk-zoom
+│   │       ├── components/             # Daftar proyek + card
 │   │       ├── services/
 │   │       └── types/
 │   ├── admin/
-│   │   ├── dashboard/                  # Admin home + stats
-│   │   ├── language/                   # Language lab admin
-│   │   └── profile/                    # Full content management
+│   │   ├── dashboard/                  # Home admin + statistik
+│   │   ├── language/                   # Admin language lab
+│   │   └── profile/                    # Manajemen konten lengkap
 │   └── api/
 │       ├── auth/                       # login, set-password
 │       ├── profile/                    # get, update
 │       ├── public/                     # about, projects, language
-│       └── admin/                      # protected CRUD + reorder
+│       └── admin/                      # CRUD terproteksi + reorder
 │           ├── skills/                 # CRUD + reorder
 │           ├── interests/              # CRUD + reorder
 │           ├── projects/               # CRUD + reorder
@@ -47,64 +47,64 @@ src/
 │           ├── certificates/
 │           ├── roles/
 │           ├── language/
-│           └── upload/                 # Cloudinary upload
+│           └── upload/                 # Upload Cloudinary
 ├── lib/
-│   ├── db.ts                           # MySQL connection pool
-│   ├── projects.ts                     # Project + flow queries
+│   ├── db.ts                           # Connection pool MySQL
+│   ├── projects.ts                     # Query proyek + flow
 │   ├── language.ts
 │   ├── admin-auth.ts
-│   └── tgl.ts                          # Date formatter
-└── middleware.ts                       # JWT route protection
+│   └── tgl.ts                          # Formatter tanggal
+└── middleware.ts                       # Proteksi route via JWT
 ```
 ## Tech Stack
 
-| Layer | Tech |
+| Layer | Teknologi |
 |---|---|
 | Framework | Next.js 15 (App Router) |
-| Language | TypeScript |
+| Bahasa | TypeScript |
 | Styling | Tailwind CSS v4 |
 | Database | MySQL via `mysql2/promise` |
-| Auth | JWT + bcryptjs, HttpOnly cookies |
-| Images | Cloudinary CDN |
-| Icons | lucide-react, react-icons |
+| Auth | JWT + bcryptjs, cookie HttpOnly |
+| Gambar | Cloudinary CDN |
+| Ikon | lucide-react, react-icons |
 | Markdown | react-markdown |
 | Drag & Drop | Native HTML5 Drag API |
 
-## Features
+## Fitur
 
-**Public Portfolio**
-- Home page with profile header, about section, and blog posts
-- About page with skills, experience, education, and certifications
-- Projects showcase with tech stacks, live links, and per-project flow breakdowns
-- Zoomable image viewer on project detail (scroll to zoom, drag to pan)
-- Blog page
-- Language lab (EN/ID learning dictionary)
-- GitHub activity calendar
+**Portofolio Publik**
+- Halaman home dengan profile header, bagian about, dan postingan blog
+- Halaman about berisi skill, pengalaman, pendidikan, dan sertifikasi
+- Showcase proyek dengan tech stack, link live, dan rincian flow per proyek
+- Penampil gambar yang bisa di-zoom pada detail proyek (scroll untuk zoom, drag untuk geser)
+- Halaman blog
+- Language lab (kamus belajar EN/ID)
+- Kalender aktivitas GitHub
 
-**Admin Dashboard** (JWT protected)
-- Statistics overview (skills, interests, experiences, certificates)
-- Full CRUD for: skills, interests, experience, roles, education, projects, project flows, certificates
-- Drag-to-reorder for projects, flows, skills, and interests (persisted to DB)
-- Profile editor (name, bio, avatar, contact info, job title)
-- Cloudinary image uploads
-- Private language lab management (EN/ID dictionary)
+**Dashboard Admin** (terproteksi JWT)
+- Ringkasan statistik (skill, interest, pengalaman, sertifikat)
+- CRUD lengkap untuk: skill, interest, pengalaman, role, pendidikan, proyek, project flow, sertifikat
+- Drag-to-reorder untuk proyek, flow, skill, dan interest (tersimpan ke DB)
+- Editor profil (nama, bio, avatar, info kontak, job title)
+- Upload gambar ke Cloudinary
+- Manajemen language lab privat (kamus EN/ID)
 
 ## Flow
 
-### User Home `/`
+### Home Pengguna `/`
 
 ![Home](./public/ss/home.png)
 
 ```
-User visits /
+Pengguna membuka /
       |
       ▼
-  Render ProfileHeader  (static — name hardcoded)
+  Render ProfileHeader  (statis — nama di-hardcode)
       |
       ▼
   AboutSection — GET /api/public/about
       |
-      ├─→ Error / no data       → fields stay empty
+      ├─→ Error / tidak ada data → field dibiarkan kosong
       |
       └─→ 200 { job_title, bio, ... }
               |
@@ -112,28 +112,28 @@ User visits /
           Render job_title + bio
               |
               ▼
-          Button "More about me →" → /pages/about
+          Tombol "More about me →" → /pages/about
       |
       ▼
   PostList — GET https://api.github.com/users/AnggaWikaNugraha/events/public?per_page=10
       |
-      ├─→ Error / empty         → "No recent activity"
+      ├─→ Error / kosong        → "No recent activity"
       |
-      └─→ 200 events[]  (max 6)
+      └─→ 200 events[]  (maks 6)
               |
               ▼
           GitHub Contribution Calendar  (react-github-calendar)
               |
               ▼
-          Recent Activity list  (event type, repo name, time ago)
+          Daftar Recent Activity  (tipe event, nama repo, waktu relatif)
 ```
 
-### Projects `/pages/projects`
+### Proyek `/pages/projects`
 
 ![Projects](./public/ss/projects.png)
 
 ```
-User visits /pages/projects
+Pengguna membuka /pages/projects
       |
       ▼
 GET /api/public/projects
@@ -146,51 +146,51 @@ GET /api/public/projects
           SELECT projects WHERE user_id=1 AND is_private=0
           ORDER BY sort_order ASC, created_at DESC
               |
-              └─→ per project: SELECT project_flows WHERE project_id=?
-                               ORDER BY sort_order ASC
+              └─→ per proyek: SELECT project_flows WHERE project_id=?
+                              ORDER BY sort_order ASC
               |
               ▼
-          Response Project[] (each with flows[])
+          Response Project[] (masing-masing dengan flows[])
               |
               ▼
-          Render Project List (card per project)
-              ├─ Cover image, title, role · company · year
-              ├─ Description (collapsible if long)
-              ├─ Tech stack pills
-              └─ Links: Demo · Source · Detail
+          Render Daftar Proyek (satu card per proyek)
+              ├─ Gambar cover, judul, role · perusahaan · tahun
+              ├─ Deskripsi (bisa dilipat jika panjang)
+              ├─ Pill tech stack
+              └─ Link: Demo · Source · Detail
 ```
 
-### Project Detail `/pages/projects/[id]`
+### Detail Proyek `/pages/projects/[id]`
 
 ![Project Detail](./public/ss/projects%20details.png)
 
 ```
-User visits /pages/projects/[id]
+Pengguna membuka /pages/projects/[id]
       |
       ▼
-getPublicProjectById(id)  ← server-side (lib/projects.ts)
+getPublicProjectById(id)  ← sisi server (lib/projects.ts)
       |
       ├─→ SELECT projects WHERE id=? AND is_private=0
       |         |
-      |         └─→ Not found  → notFound()  (404 page)
+      |         └─→ Tidak ketemu → notFound()  (halaman 404)
       |
-      └─→ Found
+      └─→ Ketemu
               |
               ▼
           SELECT project_flows WHERE project_id=?
           ORDER BY sort_order ASC
               |
               ▼
-          Render Project Detail
-              ├─ Cover image  (ZoomableImage)
-              │     └─→ Click → lightbox overlay
-              │             ├─ Scroll   → zoom in / out
-              │             ├─ Drag     → pan
-              │             └─ Esc / click outside → close
-              ├─ Tech stack pills
-              └─ Flows[]  (ordered by sort_order)
-                    ├─ Flow image  (ZoomableImage)
-                    └─ Flow description  (markdown)
+          Render Detail Proyek
+              ├─ Gambar cover  (ZoomableImage)
+              │     └─→ Klik → overlay lightbox
+              │             ├─ Scroll  → zoom in / out
+              │             ├─ Drag    → geser
+              │             └─ Esc / klik di luar → tutup
+              ├─ Pill tech stack
+              └─ Flows[]  (urut berdasarkan sort_order)
+                    ├─ Gambar flow  (ZoomableImage)
+                    └─ Deskripsi flow  (markdown)
 ```
 
 ### About `/pages/about`
@@ -198,17 +198,17 @@ getPublicProjectById(id)  ← server-side (lib/projects.ts)
 ![About](./public/ss/about.png)
 
 ```
-User visits /pages/about
+Pengguna membuka /pages/about
       |
       ▼
 GET /api/public/about
       |
-      ├─→ No user found         → 404 { error: "No user found" }
+      ├─→ User tidak ditemukan  → 404 { error: "No user found" }
       ├─→ Error                 → 500 { error: message }
       |
       └─→ 200
               |
-              ▼  (parallel DB queries)
+              ▼  (query DB paralel)
               ├─ SELECT users LIMIT 1
               ├─ SELECT user_skills       ORDER BY sort_order ASC
               ├─ SELECT user_interests    ORDER BY sort_order ASC
@@ -222,11 +222,11 @@ GET /api/public/about
                      experience[{ company, roles[] }], certificates[] }
               |
               ▼
-          Render About Page
-              ├─ AvatarSection    (avatar, name, job_title)
-              ├─ InfoSection      (email, phone, location, website)
-              ├─ ExperienceSection (company, logo, roles)
-              ├─ EducationSection  (currently empty)
+          Render Halaman About
+              ├─ AvatarSection    (avatar, nama, job_title)
+              ├─ InfoSection      (email, telepon, lokasi, website)
+              ├─ ExperienceSection (perusahaan, logo, role)
+              ├─ EducationSection  (saat ini kosong)
               ├─ SkillsSection    (skills[], interests[])
               └─ CertificatesSection (certificates[])
 ```
@@ -236,10 +236,10 @@ GET /api/public/about
 ![Language](./public/ss/language.png)
 
 ```
-User visits /pages/language
+Pengguna membuka /pages/language
       |
       ▼
-GET /api/public/language  (read-only, no auth)
+GET /api/public/language  (baca saja, tanpa auth)
       |
       ├─→ Error                 → 500 { error: message }
       |
@@ -254,85 +254,85 @@ GET /api/public/language  (read-only, no auth)
               |
               ▼
           Response {
-            entries[],          ← meanings & tags parsed from JSON
-            availableTags[],    ← unique tags, sorted A-Z
+            entries[],          ← meanings & tags di-parse dari JSON
+            availableTags[],    ← tag unik, diurutkan A-Z
             stats: { entries, meanings, tags }
           }
               |
               ▼
           Render LanguageLab (mode="public")
-              ├─ Stats cards  (total entries, meanings, tags)
-              ├─ Search bar   (filter by sourceText, meanings, tags)
-              ├─ Tag filter   (filter by availableTags)
-              └─ Entry list   (sourceText, meanings[], example, notes)
-                    ⚠ mode="public" → add / edit / delete forms are not rendered
+              ├─ Card statistik  (total entri, meaning, tag)
+              ├─ Kolom pencarian (filter berdasarkan sourceText, meanings, tags)
+              ├─ Filter tag      (filter berdasarkan availableTags)
+              └─ Daftar entri    (sourceText, meanings[], contoh, catatan)
+                    ⚠ mode="public" → form tambah / edit / hapus tidak ditampilkan
 ```
 ### Blog `/pages/blog`
 
 ```
-User visits /pages/blog
+Pengguna membuka /pages/blog
       |
       ▼
-  getBlogFeed()  ← hardcoded static data (no API call)
+  getBlogFeed()  ← data statis di-hardcode (tanpa panggilan API)
       |
       ▼
-  setTimeout 1000ms  (simulated loading)
+  setTimeout 1000ms  (simulasi loading)
       |
-      ├─→ posts set to []   → "No posts available."
+      ├─→ posts di-set []   → "No posts available."
       |
-      └─→ (future) posts[]  → Render BlogCard list
+      └─→ (nanti) posts[]   → Render daftar BlogCard
 ```
 
-### Admin Dashboard
+### Dashboard Admin
 
 ![Admin Dashboard](./public/ss/admin%20dashboard.png)
 
 ```
-Admin visits dashboard
+Admin membuka dashboard
       |
       ▼
-middleware.ts — verify JWT cookie (token)
+middleware.ts — verifikasi cookie JWT (token)
       |
-      ├─→ No cookie / invalid   → redirect login page
+      ├─→ Tidak ada cookie / invalid → redirect ke halaman login
       |
-      └─→ Valid JWT
+      └─→ JWT valid
               |
               ▼
           GET /api/admin/skills
           GET /api/admin/interests
           GET /api/admin/experience
           GET /api/admin/certificates
-              |   (parallel fetch, client-side useEffect)
+              |   (fetch paralel, useEffect sisi klien)
               ▼
           Response
-              ├─ skills[]        → count
-              ├─ interests[]     → count
-              ├─ experience[]    → count
-              └─ certificates[]  → count
+              ├─ skills[]        → jumlah
+              ├─ interests[]     → jumlah
+              ├─ experience[]    → jumlah
+              └─ certificates[]  → jumlah
               |
               ▼
-          Render Stats Cards
-              ├─ Skills count
-              ├─ Interests count
-              ├─ Experience count
-              └─ Certificates count
+          Render Card Statistik
+              ├─ Jumlah skill
+              ├─ Jumlah interest
+              ├─ Jumlah pengalaman
+              └─ Jumlah sertifikat
 ```
 
-### Admin Profile
+### Profil Admin
 
 ![Admin Profile](./public/ss/admin%20profile.png)
 
 ```
-Admin visits profile page
+Admin membuka halaman profil
       |
       ▼
-middleware.ts — verify JWT cookie
+middleware.ts — verifikasi cookie JWT
       |
-      ├─→ Invalid / no token    → redirect login page
+      ├─→ Invalid / tanpa token → redirect ke halaman login
       |
       └─→ Valid
               |
-              ▼  (parallel fetch on mount)
+              ▼  (fetch paralel saat mount)
               ├─ GET /api/profile
               ├─ GET /api/admin/skills
               ├─ GET /api/admin/interests
@@ -341,10 +341,10 @@ middleware.ts — verify JWT cookie
               └─ GET /api/admin/projects
               |
               ▼
-          Render tabs: Profile · Skills · Interests · Experience · Certificates · Projects
+          Render tab: Profile · Skills · Interests · Experience · Certificates · Projects
 
 ── Tab: Profile ──────────────────────────────────────────
-  Edit fields (name, bio, avatar_url, job_title, …)
+  Edit field (name, bio, avatar_url, job_title, …)
       |
       ▼  [Save]
   POST /api/profile/update  { name, bio, avatar_url, … }
@@ -392,31 +392,31 @@ middleware.ts — verify JWT cookie
               └─→ { success: true }
   [Delete] POST /api/admin/projects/delete { id }
               └─→ refresh GET /api/admin/projects
-  [Drag project] POST /api/admin/projects/reorder  { ids[] }
-              └─→ { success: true }  → sort_order updated in DB
+  [Drag proyek] POST /api/admin/projects/reorder  { ids[] }
+              └─→ { success: true }  → sort_order diperbarui di DB
 
-  Per project — Flow actions:
+  Per proyek — aksi Flow:
   [Add Flow]    POST /api/admin/project-flows/create  { projectId, title, imageUrl, description }
   [Save Flow]   POST /api/admin/project-flows/update  { id, title, imageUrl, description }
   [Delete Flow] POST /api/admin/project-flows/delete  { id }
   [Drag flow]   POST /api/admin/project-flows/reorder { ids[] }
-              └─→ sort_order persisted; public detail page reflects new order
+              └─→ sort_order tersimpan; halaman detail publik mengikuti urutan baru
 
-  Image upload (cover / flow):
+  Upload gambar (cover / flow):
   POST /api/admin/upload  multipart/form-data { file }
-      └─→ { url }  (Cloudinary CDN URL)
+      └─→ { url }  (URL Cloudinary CDN)
 ```
 ### Admin Language
 
 ![Admin Language](./public/ss/admin%20language.png)
 
 ```
-Admin visits language admin page
+Admin membuka halaman admin language
       |
       ▼
-middleware.ts — verify JWT cookie
+middleware.ts — verifikasi cookie JWT
       |
-      ├─→ Invalid / no token    → redirect login page
+      ├─→ Invalid / tanpa token → redirect ke halaman login
       |
       └─→ Valid
               |
@@ -432,21 +432,21 @@ ORDER BY updated_at DESC, created_at DESC
       |
       ▼
 Response {
-  entries[],       ← meanings & tags parsed from JSON
-  availableTags[], ← unique tags, sorted A-Z
+  entries[],       ← meanings & tags di-parse dari JSON
+  availableTags[], ← tag unik, diurutkan A-Z
   stats: { entries, meanings, tags }
 }
       |
       ▼
 Render LanguageLab (mode="admin")
-    ├─ Stats cards  (entries, meanings, tags)
-    ├─ Search bar   (filter by sourceText, meanings, tags, example, notes)
-    ├─ Direction filter  (All / EN→ID / ID→EN)
-    ├─ Tag filter   (filter by availableTags)
-    ├─ [Add Entry] button → open create form
-    └─ Entry list grouped A-Z  (click card → edit modal)
+    ├─ Card statistik  (entri, meaning, tag)
+    ├─ Kolom pencarian (filter berdasarkan sourceText, meanings, tags, contoh, catatan)
+    ├─ Filter arah     (All / EN→ID / ID→EN)
+    ├─ Filter tag      (filter berdasarkan availableTags)
+    ├─ Tombol [Add Entry] → buka form pembuatan
+    └─ Daftar entri dikelompokkan A-Z  (klik card → modal edit)
 
-── Create Entry ──────────────────────────────────────────
+── Buat Entri ────────────────────────────────────────────
   [Save Entry]
   POST /api/admin/language/create
   { sourceText, sourceLang, targetLang, meanings[],
@@ -454,7 +454,7 @@ Render LanguageLab (mode="admin")
       └─→ { success: true, id }
               └─→ refresh GET /api/admin/language
 
-── Edit Entry  (modal) ───────────────────────────────────
+── Edit Entri  (modal) ───────────────────────────────────
   [Save]
   POST /api/admin/language/update
   { id, sourceText, sourceLang, targetLang, meanings[],
@@ -462,14 +462,14 @@ Render LanguageLab (mode="admin")
       └─→ { success: true }
               └─→ refresh GET /api/admin/language
 
-── Delete Entry (modal) ──────────────────────────────────
+── Hapus Entri (modal) ───────────────────────────────────
   [Delete]
   POST /api/admin/language/delete  { id }
       └─→ { success: true }
               └─→ refresh GET /api/admin/language
 ```
 
-## API Endpoints
+## Endpoint API
 
 ### Auth
 
@@ -477,9 +477,9 @@ Render LanguageLab (mode="admin")
 ```json
 // Request
 { "email": "string", "password": "string" }
-// Response 200 — sets HttpOnly token cookie
+// Response 200 — menyetel cookie token HttpOnly
 { "success": true }
-// Errors: 404 User not found · 401 Wrong password · 400 No password set
+// Error: 404 User not found · 401 Wrong password · 400 No password set
 ```
 
 **POST `/api/auth/set-password`**
@@ -492,7 +492,7 @@ Render LanguageLab (mode="admin")
 
 ---
 
-### Profile (requires JWT cookie)
+### Profile (butuh cookie JWT)
 
 **GET `/api/profile`**
 ```json
@@ -507,7 +507,7 @@ Render LanguageLab (mode="admin")
 
 **POST `/api/profile/update`**
 ```json
-// Request — all fields optional
+// Request — semua field opsional
 {
   "name": "string", "username": "string", "bio": "string",
   "email": "string", "phone": "string", "location": "string",
@@ -562,14 +562,14 @@ Render LanguageLab (mode="admin")
 
 **GET `/api/public/language`**
 ```json
-// Response — language lab entries (public read-only)
+// Response — entri language lab (publik, baca saja)
 [{ "id": "string", "sourceText": "string", "sourceLang": "string",
    "targetLang": "string", "meanings": ["string"], "tags": ["string"] }]
 ```
 
 ---
 
-### Admin — Skills (requires JWT cookie)
+### Admin — Skills (butuh cookie JWT)
 
 **GET `/api/admin/skills`**
 ```json
@@ -595,7 +595,7 @@ Render LanguageLab (mode="admin")
 
 **POST `/api/admin/skills/reorder`**
 ```json
-// Request — ordered array of all skill IDs
+// Request — array berisi seluruh ID skill sesuai urutan
 { "ids": ["string"] }
 // Response
 { "success": true }
@@ -603,7 +603,7 @@ Render LanguageLab (mode="admin")
 
 ---
 
-### Admin — Interests (requires JWT cookie)
+### Admin — Interests (butuh cookie JWT)
 
 **GET `/api/admin/interests`**
 ```json
@@ -616,15 +616,15 @@ Render LanguageLab (mode="admin")
 
 **POST `/api/admin/interests/reorder`** · `{ "ids": ["string"] }`
 
-All respond `{ "success": true }`.
+Semuanya membalas `{ "success": true }`.
 
 ---
 
-### Admin — Projects (requires JWT cookie)
+### Admin — Projects (butuh cookie JWT)
 
 **GET `/api/admin/projects`**
 ```json
-// Response — same shape as public/projects including flows
+// Response — bentuk sama seperti public/projects, termasuk flows
 [{ "id": "string", "title": "string", "sortOrder": "number", "isPrivate": "boolean", "flows": [] }]
 ```
 
@@ -643,7 +643,7 @@ All respond `{ "success": true }`.
 { "success": true, "id": "string" }
 ```
 
-**POST `/api/admin/projects/update`** — same fields as create + `"id": "string"` → `{ "success": true }`
+**POST `/api/admin/projects/update`** — field sama seperti create + `"id": "string"` → `{ "success": true }`
 
 **POST `/api/admin/projects/delete`** · `{ "id": "string" }` → `{ "success": true }`
 
@@ -651,7 +651,7 @@ All respond `{ "success": true }`.
 
 ---
 
-### Admin — Project Flows (requires JWT cookie)
+### Admin — Project Flows (butuh cookie JWT)
 
 **POST `/api/admin/project-flows/create`**
 ```json
@@ -674,7 +674,7 @@ All respond `{ "success": true }`.
 
 ---
 
-### Admin — Experience (requires JWT cookie)
+### Admin — Experience (butuh cookie JWT)
 
 **GET `/api/admin/experience`**
 ```json
@@ -695,7 +695,7 @@ All respond `{ "success": true }`.
 
 ---
 
-### Admin — Roles (requires JWT cookie)
+### Admin — Roles (butuh cookie JWT)
 
 **POST `/api/admin/roles/create`**
 ```json
@@ -707,13 +707,13 @@ All respond `{ "success": true }`.
 { "success": true, "id": "string" }
 ```
 
-**POST `/api/admin/roles/update`** · same fields + `"id"` → `{ "success": true }`
+**POST `/api/admin/roles/update`** · field sama + `"id"` → `{ "success": true }`
 
 **POST `/api/admin/roles/delete`** · `{ "id": "string" }` → `{ "success": true }`
 
 ---
 
-### Admin — Certificates (requires JWT cookie)
+### Admin — Certificates (butuh cookie JWT)
 
 **GET `/api/admin/certificates`**
 ```json
@@ -723,15 +723,15 @@ All respond `{ "success": true }`.
 
 **POST `/api/admin/certificates/create`** · `{ "title", "issuer", "issue_date", "expiration_date", "credential_url" }` → `{ "success": true }`
 
-**POST `/api/admin/certificates/update`** · same + `"id"` → `{ "success": true }`
+**POST `/api/admin/certificates/update`** · sama + `"id"` → `{ "success": true }`
 
 **POST `/api/admin/certificates/delete`** · `{ "id": "string" }` → `{ "success": true }`
 
 ---
 
-### Admin — Language (requires JWT cookie)
+### Admin — Language (butuh cookie JWT)
 
-**GET `/api/admin/language`** → full language payload
+**GET `/api/admin/language`** → payload language lengkap
 
 **POST `/api/admin/language/create`**
 ```json
@@ -744,19 +744,19 @@ All respond `{ "success": true }`.
 { "success": true, "id": "string" }
 ```
 
-**POST `/api/admin/language/update`** · same + `"id"` → `{ "success": true }`
+**POST `/api/admin/language/update`** · sama + `"id"` → `{ "success": true }`
 
 **POST `/api/admin/language/delete`** · `{ "id": "string" }` → `{ "success": true }`
 
 ---
 
-### Admin — Upload (requires JWT cookie)
+### Admin — Upload (butuh cookie JWT)
 
 **POST `/api/admin/upload`**
 ```
 // Request: multipart/form-data
-file: File (image)
+file: File (gambar)
 // Response
-{ "url": "string" }  // Cloudinary CDN URL
+{ "url": "string" }  // URL Cloudinary CDN
 // Error: { "error": "No file provided" } 400
 ```
