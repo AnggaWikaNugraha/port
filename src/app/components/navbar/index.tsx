@@ -1,17 +1,34 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, User, LogOut, Languages } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, User, LogOut, Languages } from 'lucide-react';
 
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = pathname.startsWith('/admin');
+  const isLanguageLab = pathname === '/pages/language';
 
   const logout = () => {
     document.cookie = 'token=; Max-Age=0; path=/';
     router.push('/pages/login');
   };
+
+  if (isLanguageLab) {
+    return (
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-[#d6e3e3] bg-[#edf4f4]/95 px-4 py-3 text-[#214f57] backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-[1380px] items-center justify-between">
+          <Link href="/pages/language" className="flex items-center gap-2 font-[Georgia,serif] text-lg font-bold">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#155e6c] text-white"><Languages className="h-4 w-4" /></span>
+            LanguageLab
+          </Link>
+          <Link href="/" className="inline-flex items-center gap-2 rounded-xl border border-[#cfdddd] bg-white px-3 py-2 text-sm font-semibold text-[#52747a] transition hover:bg-[#f7fafa]">
+            <ArrowLeft className="h-4 w-4" /> Back to portfolio
+          </Link>
+        </div>
+      </nav>
+    );
+  }
 
   if (isAdmin) {
     return (

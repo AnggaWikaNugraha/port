@@ -78,7 +78,7 @@ src/
 - Projects showcase with tech stacks, live links, and per-project flow breakdowns
 - Zoomable image viewer on project detail (scroll to zoom, drag to pan)
 - Blog page
-- Language lab (EN/ID learning dictionary)
+- LanguageLab V2: personal EN/ID vocabulary collection with word families and bulk JSON import
 - GitHub activity calendar
 
 **Admin Dashboard** (JWT protected)
@@ -87,7 +87,14 @@ src/
 - Drag-to-reorder for projects, flows, skills, and interests (persisted to DB)
 - Profile editor (name, bio, avatar, contact info, job title)
 - Cloudinary image uploads
-- Private language lab management (EN/ID dictionary)
+- Private LanguageLab management for vocabulary, examples, word families, and bulk import
+
+## LanguageLab Roadmap
+
+LanguageLab is evolving into a personal, manually curated language-learning workspace.
+
+- **Vocabulary Lab** — available: EN/ID vocabulary, multiple uses per word, part-of-speech badges, examples and translations, word families, and bulk JSON import.
+- **Grammar Lab** — coming soon: grammar topics, rules and formulas, examples with translations, and common-mistake notes. Practice exercises will follow after the reference experience is established.
 
 ## Flow
 

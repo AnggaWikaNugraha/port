@@ -78,7 +78,7 @@ src/
 - Showcase proyek dengan tech stack, link live, dan rincian flow per proyek
 - Penampil gambar yang bisa di-zoom pada detail proyek (scroll untuk zoom, drag untuk geser)
 - Halaman blog
-- Language lab (kamus belajar EN/ID)
+- LanguageLab V2: koleksi vocabulary pribadi EN/ID dengan word family dan bulk import JSON
 - Kalender aktivitas GitHub
 
 **Dashboard Admin** (terproteksi JWT)
@@ -87,7 +87,14 @@ src/
 - Drag-to-reorder untuk proyek, flow, skill, dan interest (tersimpan ke DB)
 - Editor profil (nama, bio, avatar, info kontak, job title)
 - Upload gambar ke Cloudinary
-- Manajemen language lab privat (kamus EN/ID)
+- Manajemen LanguageLab privat untuk vocabulary, contoh, word family, dan bulk import
+
+## Roadmap LanguageLab
+
+LanguageLab dikembangkan menjadi workspace belajar bahasa pribadi yang dikurasi secara manual.
+
+- **Vocabulary Lab** — tersedia: vocabulary EN/ID, banyak use dalam satu word, badge part of speech, contoh dan terjemahan, word family, serta bulk import JSON.
+- **Grammar Lab** — segera hadir: topic grammar, rule dan formula, contoh beserta terjemahannya, serta catatan common mistake. Fitur latihan akan menyusul setelah reference grammar selesai.
 
 ## Flow
 
