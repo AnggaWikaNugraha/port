@@ -3,19 +3,164 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { KeyboardEvent, MouseEvent, useState } from 'react';
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowUpRight, Github, Globe, X } from 'lucide-react';
 import ProjectMarkdown, { normalizeProjectMarkdown } from '../projectMarkdown';
 import { ProjectType } from '../../types';
+
+function ProjectModal({
+    eyebrow,
+    title,
+    modalId,
+    onClose,
+    children,
+}: {
+    eyebrow: string;
+    title: string;
+    modalId: string;
+    onClose: () => void;
+    children: ReactNode;
+}) {
+    const [isClosing, setIsClosing] = useState(false);
+    const isClosingRef = useRef(false);
+    const closeTimerRef = useRef<number | null>(null);
+
+    const requestClose = useCallback(() => {
+        if (isClosingRef.current) return;
+
+        isClosingRef.current = true;
+        setIsClosing(true);
+        closeTimerRef.current = window.setTimeout(onClose, 200);
+    }, [onClose]);
+
+    useEffect(() => {
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const handleEscape = (event: globalThis.KeyboardEvent) => {
+            if (event.key === 'Escape') requestClose();
+        };
+
+        window.addEventListener('keydown', handleEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', handleEscape);
+            if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+        };
+    }, [requestClose]);
+
+    return createPortal(
+        <div
+            className="project-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm sm:p-6"
+            data-closing={isClosing}
+            onClick={event => {
+                event.stopPropagation();
+                if (event.target === event.currentTarget) requestClose();
+            }}
+            role="presentation"
+        >
+            <div
+                className="project-modal-panel flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900 shadow-2xl shadow-black/50"
+                data-closing={isClosing}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={modalId}
+                onClick={event => event.stopPropagation()}
+            >
+                <div className="flex items-start justify-between gap-6 border-b border-white/10 px-5 py-4 sm:px-6 sm:py-5">
+                    <div>
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+                            {eyebrow}
+                        </p>
+                        <h2 id={modalId} className="text-xl font-bold text-white sm:text-2xl">
+                            {title}
+                        </h2>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={requestClose}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 text-gray-400 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+                        aria-label="Close modal"
+                        autoFocus
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                    {children}
+                </div>
+            </div>
+        </div>,
+        document.body,
+    );
+}
+
+function DescriptionModal({
+    title,
+    description,
+    onClose,
+}: {
+    title: string;
+    description: string;
+    onClose: () => void;
+}) {
+    return (
+        <ProjectModal
+            eyebrow="Project overview"
+            title={title}
+            modalId="project-description-title"
+            onClose={onClose}
+        >
+            <ProjectMarkdown
+                content={description}
+                className="text-sm sm:text-base [&_p]:text-gray-400 sm:[&_p]:leading-7 [&_ul]:text-gray-400 [&_ol]:text-gray-400 [&_li]:text-gray-400"
+            />
+        </ProjectModal>
+    );
+}
+
+function TechStackModal({
+    title,
+    techStack,
+    onClose,
+}: {
+    title: string;
+    techStack: string[];
+    onClose: () => void;
+}) {
+    return (
+        <ProjectModal
+            eyebrow="Technologies used"
+            title={title}
+            modalId="project-tech-stack-title"
+            onClose={onClose}
+        >
+            <div className="flex flex-wrap gap-2.5">
+                {techStack.map(tech => (
+                    <span
+                        key={tech}
+                        className="rounded-full border border-white/[0.14] bg-white/[0.04] px-4 py-2 text-sm font-medium text-gray-200"
+                    >
+                        {tech}
+                    </span>
+                ))}
+            </div>
+        </ProjectModal>
+    );
+}
 
 /* ── Project Row (Medium-style) ───────────────────────── */
 function Project({ project }: { project: ProjectType }) {
     const router = useRouter();
-    const [showAllTech, setShowAllTech] = useState(false);
-    const [showFullDesc, setShowFullDesc] = useState(false);
+    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+    const [showTechStackModal, setShowTechStackModal] = useState(false);
     const normalizedDescription = project.description ? normalizeProjectMarkdown(project.description) : '';
     const isLongDesc = normalizedDescription.length > 220 || normalizedDescription.split('\n').length > 5;
     const techStack = project.techStack ?? [];
-    const visibleTech = showAllTech ? techStack : techStack.slice(0, 3);
+    const visibleTech = techStack.slice(0, 3);
     const hiddenCount = techStack.length - 3;
     const detailHref = `/pages/projects/${project.id}`;
 
@@ -36,7 +181,7 @@ function Project({ project }: { project: ProjectType }) {
 
     return (
         <div
-            className="flex flex-col-reverse cursor-pointer rounded-[4px] overflow-hidden bg-gray-900/50 border border-white/[0.07] sm:flex-row sm:gap-8 sm:py-6 sm:rounded-none sm:overflow-visible sm:bg-transparent sm:border-0"
+            className="group flex h-full cursor-pointer flex-col-reverse overflow-hidden rounded-[4px] border border-white/[0.07] bg-gray-900/50 transition-colors sm:min-h-[640px] sm:flex-col sm:rounded-[22px] sm:border-white/[0.10] sm:bg-gray-900/30 sm:hover:border-white/20 lg:min-h-[680px]"
             onClick={handleCardClick}
             onKeyDown={handleCardKeyDown}
             role="link"
@@ -44,17 +189,17 @@ function Project({ project }: { project: ProjectType }) {
         >
 
             {/* Left: content */}
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5 px-4 pt-3 pb-4 sm:px-0 sm:pt-0 sm:pb-0">
+            <div className="order-1 flex min-w-0 flex-1 flex-col gap-1.5 px-4 pb-4 pt-3 sm:order-2 sm:gap-0 sm:px-8 sm:pb-8 sm:pt-8">
 
                 {/* Publication line + year + featured */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap sm:order-2 sm:mt-2">
                     {(project.role || project.company) && (
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-600 sm:text-sm sm:text-gray-500">
                             {[project.role, project.company].filter(Boolean).join(' · ')}
                         </p>
                     )}
                     {project.year && (
-                        <span className="text-[10px] text-gray-700 tabular-nums">· {project.year}</span>
+                        <span className="text-[10px] text-gray-700 tabular-nums sm:text-sm sm:text-gray-500 sm:[&:first-child]:before:hidden sm:before:mr-2 sm:before:content-['·']">{project.year}</span>
                     )}
                     {project.featured && (
                         <span className="text-[10px] text-gray-500 bg-white/[0.06] px-2 py-px rounded-full">
@@ -67,31 +212,34 @@ function Project({ project }: { project: ProjectType }) {
                 </div>
 
                 {/* Title */}
-                <Link href={detailHref} className="block">
-                    <h2 className="text-white font-bold text-base sm:text-lg leading-snug line-clamp-2">
-                        {project.title}
-                    </h2>
+                <Link href={detailHref} className="block sm:order-1">
+                    <div className="flex items-start justify-between gap-4">
+                        <h2 className="line-clamp-2 text-base font-bold leading-snug text-white sm:text-2xl">
+                            {project.title}
+                        </h2>
+                        <ArrowUpRight className="mt-0.5 hidden h-6 w-6 shrink-0 text-gray-500 transition duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white sm:block" />
+                    </div>
                 </Link>
 
                 {/* Description */}
                 {project.description && (
-                    <div className="flex flex-col items-start gap-1">
-                        <div className={`relative w-full overflow-hidden ${showFullDesc ? '' : 'max-h-32 sm:max-h-36'}`}>
+                    <div className="flex flex-col items-start gap-1 sm:order-3 sm:mt-7">
+                        <div className="relative max-h-32 w-full overflow-hidden sm:max-h-[132px]">
                             <ProjectMarkdown
                                 content={project.description}
-                                className="text-xs sm:text-sm [&_p]:text-gray-500 [&_ul]:text-gray-500 [&_ol]:text-gray-500 [&_li]:text-gray-500 [&_h1]:text-gray-300 [&_h2]:text-gray-300 [&_h3]:text-gray-300 [&_strong]:text-gray-300"
+                                className="text-xs sm:text-base [&_p]:text-gray-500 sm:[&_p]:leading-7 [&_ul]:text-gray-500 [&_ol]:text-gray-500 [&_li]:text-gray-500 [&_h1]:text-gray-300 [&_h2]:text-gray-300 [&_h3]:text-gray-300 [&_strong]:text-gray-300"
                             />
-                            {!showFullDesc && isLongDesc && (
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-gray-950 to-transparent" />
+                            {isLongDesc && (
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-gray-950 to-transparent sm:from-[#10141d]" />
                             )}
                         </div>
                         {isLongDesc && (
                             <button
                                 type="button"
-                                onClick={() => { setShowFullDesc(v => !v); }}
-                                className="block text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
+                                onClick={() => setShowDescriptionModal(true)}
+                                className="block text-[11px] text-gray-600 hover:text-gray-400 transition-colors sm:text-xs"
                             >
-                                {showFullDesc ? 'Show less' : 'Show more'}
+                                Show more
                             </button>
                         )}
                     </div>
@@ -99,38 +247,29 @@ function Project({ project }: { project: ProjectType }) {
 
                 {/* Tech stack — mobile only */}
                 {techStack.length > 0 && (
-                    <div className="flex flex-wrap gap-1 items-center sm:hidden">
+                    <div className="flex flex-wrap gap-1 items-center sm:order-4 sm:mt-auto sm:gap-2 sm:pt-8">
                         {visibleTech.map(tech => (
                             <span
                                 key={tech}
-                                className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
+                                className="rounded-full border border-white/[0.07] bg-white/[0.04] px-2 py-px text-[10px] text-gray-500 sm:border-white/[0.14] sm:bg-transparent sm:px-3.5 sm:py-1.5 sm:text-sm sm:font-medium sm:text-gray-300"
                             >
                                 {tech}
                             </span>
                         ))}
-                        {!showAllTech && hiddenCount > 0 && (
+                        {hiddenCount > 0 && (
                             <button
                                 type="button"
-                                onClick={() => { setShowAllTech(true); }}
-                                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                                onClick={() => setShowTechStackModal(true)}
+                                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors sm:text-xs"
                             >
                                 +{hiddenCount} more
-                            </button>
-                        )}
-                        {showAllTech && hiddenCount > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => { setShowAllTech(false); }}
-                                className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-                            >
-                                Show less
                             </button>
                         )}
                     </div>
                 )}
 
                 {/* Actions — bottom left */}
-                <div className="flex items-center gap-3 mt-auto pt-2 flex-wrap">
+                <div className="flex items-center gap-3 mt-auto pt-2 flex-wrap sm:hidden">
                     {project.demoUrl && (
                         <Link
                             href={project.demoUrl}
@@ -162,59 +301,66 @@ function Project({ project }: { project: ProjectType }) {
             </div>
 
             {/* Right: thumbnail + meta */}
-            <div className="w-full sm:flex-shrink-0 sm:w-48 sm:flex sm:flex-col sm:gap-2 sm:self-start sm:mt-5">
+            <div className="order-2 w-full sm:order-1 sm:relative sm:h-[300px] sm:flex-shrink-0 sm:border-b sm:border-white/[0.08] sm:bg-gray-950/45 lg:h-[320px]">
                 {project.coverImage && (
                     <Link
                         href={detailHref}
-                        className="block w-full h-44 overflow-hidden bg-gray-800/40 sm:w-48 sm:h-32"
-                        style={{ borderRadius: '2px' }}
+                        className="block h-44 w-full overflow-hidden bg-gray-800/40 sm:h-full"
                     >
                         <Image
                             src={project.coverImage}
                             alt={project.title}
-                            width={192}
-                            height={128}
-                            className="w-full h-full object-cover object-top"
+                            width={720}
+                            height={480}
+                            className="h-full w-full object-cover object-top transition-transform duration-500 sm:group-hover:scale-[1.02]"
                         />
                     </Link>
                 )}
 
-                {/* Tech stack — desktop only */}
-                <div className="hidden sm:flex sm:flex-col sm:gap-1.5">
-                    {techStack.length > 0 && (
-                        <div className="flex flex-col items-start gap-1.5">
-                            <div className="flex flex-wrap gap-1 items-center">
-                                {visibleTech.map(tech => (
-                                    <span
-                                        key={tech}
-                                        className="text-[10px] text-gray-500 bg-white/[0.04] border border-white/[0.07] px-2 py-px rounded-full"
-                                    >
-                                        {tech}
-                                    </span>
-                                ))}
-                            </div>
-                            {!showAllTech && hiddenCount > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => { setShowAllTech(true); }}
-                                    className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-                                >
-                                    Show +{hiddenCount} more
-                                </button>
-                            )}
-                            {showAllTech && hiddenCount > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => { setShowAllTech(false); }}
-                                    className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-                                >
-                                    Show less
-                                </button>
-                            )}
-                        </div>
+                {/* Floating actions — desktop only */}
+                <div className="absolute right-4 top-4 z-10 hidden flex-wrap justify-end gap-2 sm:flex">
+                    {project.demoUrl && (
+                        <Link
+                            href={project.demoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
+                        >
+                            <Globe className="h-4 w-4" />
+                            Website
+                        </Link>
+                    )}
+                    {project.repoUrl && (
+                        <Link
+                            href={project.repoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
+                        >
+                            <Github className="h-4 w-4" />
+                            Source
+                        </Link>
                     )}
                 </div>
             </div>
+
+            {showDescriptionModal && project.description && (
+                <DescriptionModal
+                    title={project.title}
+                    description={project.description}
+                    onClose={() => setShowDescriptionModal(false)}
+                />
+            )}
+
+            {showTechStackModal && (
+                <TechStackModal
+                    title={project.title}
+                    techStack={techStack}
+                    onClose={() => setShowTechStackModal(false)}
+                />
+            )}
         </div>
     );
 }
