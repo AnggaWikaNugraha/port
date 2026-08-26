@@ -53,7 +53,7 @@ function ProjectModal({
 
     return createPortal(
         <div
-            className="project-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm sm:p-6"
+            className="project-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 font-sans backdrop-blur-sm sm:p-6"
             data-closing={isClosing}
             onClick={event => {
                 event.stopPropagation();
@@ -74,7 +74,7 @@ function ProjectModal({
                         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
                             {eyebrow}
                         </p>
-                        <h2 id={modalId} className="text-xl font-bold text-white sm:text-2xl">
+                        <h2 id={modalId} className="text-lg font-bold tracking-tight text-white sm:text-xl">
                             {title}
                         </h2>
                     </div>
@@ -116,7 +116,7 @@ function DescriptionModal({
         >
             <ProjectMarkdown
                 content={description}
-                className="text-sm sm:text-base [&_p]:text-gray-400 sm:[&_p]:leading-7 [&_ul]:text-gray-400 [&_ol]:text-gray-400 [&_li]:text-gray-400"
+                className="text-xs sm:text-sm [&_p]:text-gray-400 sm:[&_p]:leading-6 [&_ul]:text-gray-400 [&_ol]:text-gray-400 [&_li]:text-gray-400"
             />
         </ProjectModal>
     );
@@ -142,7 +142,7 @@ function TechStackModal({
                 {techStack.map(tech => (
                     <span
                         key={tech}
-                        className="rounded-full border border-white/[0.14] bg-white/[0.04] px-4 py-2 text-sm font-medium text-gray-200"
+                        className="rounded-full border border-white/[0.14] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-gray-200"
                     >
                         {tech}
                     </span>
@@ -181,7 +181,7 @@ function Project({ project }: { project: ProjectType }) {
 
     return (
         <div
-            className="group flex h-full cursor-pointer flex-col-reverse overflow-hidden rounded-[4px] border border-white/[0.07] bg-gray-900/50 transition-colors sm:min-h-[640px] sm:flex-col sm:rounded-[22px] sm:border-white/[0.10] sm:bg-gray-900/30 sm:hover:border-white/20 lg:min-h-[680px]"
+            className="group flex h-full cursor-pointer flex-col-reverse overflow-hidden rounded-[4px] border border-white/[0.07] bg-gray-900/50 transition-colors sm:min-h-[580px] sm:flex-col sm:rounded-[22px] sm:border-white/[0.10] sm:bg-gray-900/30 sm:hover:border-white/20 lg:min-h-[610px]"
             onClick={handleCardClick}
             onKeyDown={handleCardKeyDown}
             role="link"
@@ -189,17 +189,17 @@ function Project({ project }: { project: ProjectType }) {
         >
 
             {/* Left: content */}
-            <div className="order-1 flex min-w-0 flex-1 flex-col gap-1.5 px-4 pb-4 pt-3 sm:order-2 sm:gap-0 sm:px-8 sm:pb-8 sm:pt-8">
+            <div className="order-1 flex min-w-0 flex-1 flex-col gap-1.5 px-4 pb-4 pt-3 sm:order-2 sm:gap-0 sm:px-6 sm:pb-6 sm:pt-6">
 
                 {/* Publication line + year + featured */}
                 <div className="flex items-center gap-2 flex-wrap sm:order-2 sm:mt-2">
                     {(project.role || project.company) && (
-                        <p className="text-xs text-gray-600 sm:text-sm sm:text-gray-500">
+                        <p className="text-xs text-gray-600 sm:text-[11px] sm:text-gray-500">
                             {[project.role, project.company].filter(Boolean).join(' · ')}
                         </p>
                     )}
                     {project.year && (
-                        <span className="text-[10px] text-gray-700 tabular-nums sm:text-sm sm:text-gray-500 sm:[&:first-child]:before:hidden sm:before:mr-2 sm:before:content-['·']">{project.year}</span>
+                        <span className="text-[10px] text-gray-700 tabular-nums sm:text-[11px] sm:text-gray-500 sm:[&:first-child]:before:hidden sm:before:mr-2 sm:before:content-['·']">{project.year}</span>
                     )}
                     {project.featured && (
                         <span className="text-[10px] text-gray-500 bg-white/[0.06] px-2 py-px rounded-full">
@@ -214,7 +214,7 @@ function Project({ project }: { project: ProjectType }) {
                 {/* Title */}
                 <Link href={detailHref} className="block sm:order-1">
                     <div className="flex items-start justify-between gap-4">
-                        <h2 className="line-clamp-2 text-base font-bold leading-snug text-white sm:text-2xl">
+                        <h2 className="line-clamp-2 text-base font-bold leading-snug tracking-tight text-white sm:text-lg">
                             {project.title}
                         </h2>
                         <ArrowUpRight className="mt-0.5 hidden h-6 w-6 shrink-0 text-gray-500 transition duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white sm:block" />
@@ -224,10 +224,10 @@ function Project({ project }: { project: ProjectType }) {
                 {/* Description */}
                 {project.description && (
                     <div className="flex flex-col items-start gap-1 sm:order-3 sm:mt-7">
-                        <div className="relative max-h-32 w-full overflow-hidden sm:max-h-[132px]">
+                        <div className="relative max-h-32 w-full overflow-hidden sm:max-h-[116px]">
                             <ProjectMarkdown
                                 content={project.description}
-                                className="text-xs sm:text-base [&_p]:text-gray-500 sm:[&_p]:leading-7 [&_ul]:text-gray-500 [&_ol]:text-gray-500 [&_li]:text-gray-500 [&_h1]:text-gray-300 [&_h2]:text-gray-300 [&_h3]:text-gray-300 [&_strong]:text-gray-300"
+                                className="text-xs sm:text-[13px] [&_p]:text-gray-500 sm:[&_p]:leading-[1.65] [&_ul]:text-gray-500 [&_ol]:text-gray-500 [&_li]:text-gray-500 [&_h1]:text-gray-300 [&_h2]:text-gray-300 [&_h3]:text-gray-300 [&_strong]:text-gray-300"
                             />
                             {isLongDesc && (
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-gray-950 to-transparent sm:from-[#10141d]" />
@@ -251,7 +251,7 @@ function Project({ project }: { project: ProjectType }) {
                         {visibleTech.map(tech => (
                             <span
                                 key={tech}
-                                className="rounded-full border border-white/[0.07] bg-white/[0.04] px-2 py-px text-[10px] text-gray-500 sm:border-white/[0.14] sm:bg-transparent sm:px-3.5 sm:py-1.5 sm:text-sm sm:font-medium sm:text-gray-300"
+                                className="rounded-full border border-white/[0.07] bg-white/[0.04] px-2 py-px text-[10px] text-gray-500 sm:border-white/[0.12] sm:bg-transparent sm:px-2.5 sm:py-1 sm:text-[11px] sm:font-medium sm:text-gray-300"
                             >
                                 {tech}
                             </span>
@@ -301,7 +301,7 @@ function Project({ project }: { project: ProjectType }) {
             </div>
 
             {/* Right: thumbnail + meta */}
-            <div className="order-2 w-full sm:order-1 sm:relative sm:h-[300px] sm:flex-shrink-0 sm:border-b sm:border-white/[0.08] sm:bg-gray-950/45 lg:h-[320px]">
+            <div className="order-2 w-full sm:order-1 sm:relative sm:h-[260px] sm:flex-shrink-0 sm:border-b sm:border-white/[0.08] sm:bg-gray-950/45 lg:h-[280px]">
                 {project.coverImage && (
                     <Link
                         href={detailHref}
@@ -325,7 +325,7 @@ function Project({ project }: { project: ProjectType }) {
                             target="_blank"
                             rel="noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
+                            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
                         >
                             <Globe className="h-4 w-4" />
                             Website
@@ -337,7 +337,7 @@ function Project({ project }: { project: ProjectType }) {
                             target="_blank"
                             rel="noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
+                            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-950 shadow-lg shadow-black/25 transition hover:bg-gray-200"
                         >
                             <Github className="h-4 w-4" />
                             Source

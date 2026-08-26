@@ -7,9 +7,9 @@ import Project from './project';
 
 function SkeletonRow() {
     return (
-        <div className="animate-pulse overflow-hidden rounded-2xl border border-white/[0.06] bg-gray-900/50 sm:min-h-[640px] lg:min-h-[680px]">
-            <div className="w-full h-40 bg-gray-800/60 sm:h-[300px] lg:h-[320px]" />
-            <div className="flex-1 flex flex-col gap-2 p-4 sm:p-8">
+        <div className="animate-pulse overflow-hidden rounded-2xl border border-white/[0.06] bg-gray-900/50 sm:min-h-[580px] lg:min-h-[610px]">
+            <div className="h-40 w-full bg-gray-800/60 sm:h-[260px] lg:h-[280px]" />
+            <div className="flex flex-1 flex-col gap-2 p-4 sm:p-6">
                 <div className="h-3 bg-gray-800/60 rounded-full w-1/3" />
                 <div className="h-5 bg-gray-800/60 rounded-full w-4/5" />
                 <div className="h-4 bg-gray-800/40 rounded-full w-full" />

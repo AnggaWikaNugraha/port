@@ -1,13 +1,32 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, LayoutDashboard, User, LogOut, Languages } from 'lucide-react';
+import {
+  ArrowLeft,
+  FileText,
+  FolderKanban,
+  Home,
+  Languages,
+  LayoutDashboard,
+  LogOut,
+  User,
+  UserRound,
+} from 'lucide-react';
+
+const publicNavItems = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/pages/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/pages/blog', label: 'Blog', icon: FileText },
+  { href: '/pages/about', label: 'About', icon: UserRound },
+  { href: '/pages/language', label: 'Language', icon: Languages },
+];
 
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = pathname.startsWith('/admin');
   const isLanguageLab = pathname === '/pages/language';
+  const isLogin = pathname === '/pages/login';
 
   const logout = () => {
     document.cookie = 'token=; Max-Age=0; path=/';
@@ -86,28 +105,42 @@ const Navbar = () => {
     );
   }
 
+  if (isLogin) return null;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950 border-b border-gray-800 text-white px-6 py-4">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <Link href="/" className={`text-xl font-semibold ${pathname === '/' ? 'underline' : ''}`}>
-          Home
-        </Link>
-        <div className="space-x-6 text-sm">
-          <Link href="/pages/projects" className={`hover:text-gray-400 ${pathname === '/pages/projects' ? 'underline' : ''}`}>
-            Projects
-          </Link>
-          <Link href="/pages/blog" className={`hover:text-gray-400 ${pathname === '/pages/blog' ? 'underline' : ''}`}>
-            Blog
-          </Link>
-          <Link href="/pages/about" className={`hover:text-gray-400 ${pathname === '/pages/about' ? 'underline' : ''}`}>
-            About
-          </Link>
-          <Link href="/pages/language" className={`hover:text-gray-400 ${pathname === '/pages/language' ? 'underline' : ''}`}>
-            Language
-          </Link>
-        </div>
-      </div>
-    </nav>
+    <>
+      {/* Floating side navigation */}
+      <nav
+        aria-label="Primary navigation"
+        className="fixed left-2 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 rounded-full border border-white/10 bg-gray-900/90 p-1 text-gray-400 shadow-2xl shadow-black/40 backdrop-blur-xl sm:left-4 sm:p-1.5 xl:left-6"
+      >
+        {publicNavItems.map(({ href, label, icon: Icon }) => {
+          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              className={`group relative grid h-9 w-9 place-items-center rounded-full outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white/70 sm:h-11 sm:w-11 ${
+                isActive
+                  ? 'bg-white text-gray-950 shadow-lg shadow-black/30'
+                  : 'hover:bg-white/[0.08] hover:text-white'
+              }`}
+            >
+              <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-full ml-3 translate-x-1 whitespace-nowrap rounded-lg border border-white/10 bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-gray-200 opacity-0 shadow-xl transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 };
 
