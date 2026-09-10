@@ -10,16 +10,17 @@ export async function POST(req: Request) {
 
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
-    // ids = urutan baru dalam satu kategori
-    const { ids }: { ids: string[] } = await req.json();
+    const { id } = await req.json();
 
-    await Promise.all(
-      ids.map((id, index) =>
-        db.query(
-          "UPDATE user_skills SET sort_order = ? WHERE id = ? AND user_id = ?",
-          [index, id, user.id]
-        )
-      )
+    // skill di dalamnya tidak ikut terhapus, hanya jadi Uncategorized
+    await db.query(
+      "UPDATE user_skills SET category_id = NULL WHERE category_id = ? AND user_id = ?",
+      [id, user.id]
+    );
+
+    await db.query(
+      "DELETE FROM skill_categories WHERE id = ? AND user_id = ?",
+      [id, user.id]
     );
 
     return Response.json({ success: true });

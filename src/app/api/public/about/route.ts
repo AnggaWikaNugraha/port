@@ -30,12 +30,32 @@ export async function GET() {
 
     const user = rows[0];
 
-    // GET SKILLS
+    // GET SKILLS (beserta kategorinya)
     const [skillsRows]: any = await db.query(
-      "SELECT skill FROM user_skills WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
+      `SELECT
+         s.skill,
+         s.category_id AS categoryId,
+         c.name AS categoryName
+       FROM user_skills s
+       LEFT JOIN skill_categories c ON c.id = s.category_id
+       WHERE s.user_id = ?
+       ORDER BY c.sort_order IS NULL, c.sort_order ASC, c.id ASC, s.sort_order ASC, s.id ASC`,
       [user.id]
     );
+
     const skills = skillsRows.map((s: any) => s.skill);
+
+    // Kelompokkan jadi [{ id, name, skills: [] }] sesuai urutan kategori
+    const skillGroups: { id: number | null; name: string; skills: string[] }[] = [];
+    for (const row of skillsRows) {
+      const id = row.categoryId ?? null;
+      let group = skillGroups.find(g => g.id === id);
+      if (!group) {
+        group = { id, name: row.categoryName || "Other", skills: [] };
+        skillGroups.push(group);
+      }
+      group.skills.push(row.skill);
+    }
 
     // GET INTERESTS
     const [interestRows]: any = await db.query(
@@ -109,6 +129,7 @@ export async function GET() {
         website: user.website || null,
       },
       skills,
+      skillGroups,
       interests,
       experience: expRows,
       education: [],

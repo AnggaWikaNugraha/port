@@ -3,26 +3,19 @@ export const runtime = "nodejs";
 import { db } from "@/lib/db";
 import jwt from "jsonwebtoken";
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const cookie = req.headers.get("cookie");
     const token = cookie?.split(";").find(x => x.trim().startsWith("token="))?.split("=")[1];
 
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
-    // ids = urutan baru dalam satu kategori
-    const { ids }: { ids: string[] } = await req.json();
-
-    await Promise.all(
-      ids.map((id, index) =>
-        db.query(
-          "UPDATE user_skills SET sort_order = ? WHERE id = ? AND user_id = ?",
-          [index, id, user.id]
-        )
-      )
+    const [rows]: any = await db.query(
+      "SELECT id, name, sort_order AS sortOrder FROM skill_categories WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
+      [user.id]
     );
 
-    return Response.json({ success: true });
+    return Response.json(rows);
   } catch (err: any) {
     return Response.json({ error: err.message }, { status: 500 });
   }

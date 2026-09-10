@@ -21,6 +21,7 @@ export interface UserType {
     };
 
     skills?: string[];
+    skillGroups?: SkillGroupType[];
     interests?: string[];
 
     experience?: ExperienceType[];
@@ -29,6 +30,18 @@ export interface UserType {
 
     createdAt: string;
     updatedAt?: string;
+}
+
+export interface SkillGroupType {
+    id: number | null; // null = belum punya kategori
+    name: string;
+    skills: string[];
+}
+
+export interface SkillCategoryType {
+    id: number;
+    name: string;
+    sortOrder?: number;
 }
 
 export interface ExperienceType {

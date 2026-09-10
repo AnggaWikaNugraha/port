@@ -10,16 +10,19 @@ export async function POST(req: Request) {
 
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
-    // ids = urutan baru dalam satu kategori
-    const { ids }: { ids: string[] } = await req.json();
+    const { name } = await req.json();
+    if (!name?.trim()) {
+      return Response.json({ error: "Name is required" }, { status: 400 });
+    }
 
-    await Promise.all(
-      ids.map((id, index) =>
-        db.query(
-          "UPDATE user_skills SET sort_order = ? WHERE id = ? AND user_id = ?",
-          [index, id, user.id]
-        )
-      )
+    const [max]: any = await db.query(
+      "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM skill_categories WHERE user_id = ?",
+      [user.id]
+    );
+
+    await db.query(
+      "INSERT INTO skill_categories (user_id, name, sort_order) VALUES (?, ?, ?)",
+      [user.id, name.trim(), max[0].next]
     );
 
     return Response.json({ success: true });

@@ -10,16 +10,14 @@ export async function POST(req: Request) {
 
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
-    // ids = urutan baru dalam satu kategori
-    const { ids }: { ids: string[] } = await req.json();
+    const { id, name } = await req.json();
+    if (!name?.trim()) {
+      return Response.json({ error: "Name is required" }, { status: 400 });
+    }
 
-    await Promise.all(
-      ids.map((id, index) =>
-        db.query(
-          "UPDATE user_skills SET sort_order = ? WHERE id = ? AND user_id = ?",
-          [index, id, user.id]
-        )
-      )
+    await db.query(
+      "UPDATE skill_categories SET name = ? WHERE id = ? AND user_id = ?",
+      [name.trim(), id, user.id]
     );
 
     return Response.json({ success: true });

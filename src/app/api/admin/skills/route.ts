@@ -11,7 +11,15 @@ export async function GET(req: Request) {
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
     const [rows]: any = await db.query(
-      "SELECT id, skill FROM user_skills WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
+      `SELECT
+         s.id,
+         s.skill,
+         s.category_id AS categoryId,
+         c.name AS categoryName
+       FROM user_skills s
+       LEFT JOIN skill_categories c ON c.id = s.category_id
+       WHERE s.user_id = ?
+       ORDER BY c.sort_order IS NULL, c.sort_order ASC, s.sort_order ASC, s.id ASC`,
       [user.id]
     );
 

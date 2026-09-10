@@ -66,7 +66,7 @@ const AboutPage = () => {
         <InfoSection user={user} />
         <ExperienceSection experiences={user.experience} />
         <EducationSection educations={user.education} />
-        <SkillsSection skills={user.skills} interests={user.interests} />
+        <SkillsSection skills={user.skills} skillGroups={user.skillGroups} interests={user.interests} />
         <CertificatesSection certificates={user.certificates} />
       </div>
     </main>

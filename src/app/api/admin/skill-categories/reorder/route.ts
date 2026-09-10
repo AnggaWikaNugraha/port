@@ -10,13 +10,12 @@ export async function POST(req: Request) {
 
     const user: any = jwt.verify(token!, process.env.JWT_SECRET!);
 
-    // ids = urutan baru dalam satu kategori
     const { ids }: { ids: string[] } = await req.json();
 
     await Promise.all(
       ids.map((id, index) =>
         db.query(
-          "UPDATE user_skills SET sort_order = ? WHERE id = ? AND user_id = ?",
+          "UPDATE skill_categories SET sort_order = ? WHERE id = ? AND user_id = ?",
           [index, id, user.id]
         )
       )

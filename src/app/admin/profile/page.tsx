@@ -5,11 +5,11 @@ import { useState, useEffect, useRef } from "react";
 export default function AdminProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [skills, setSkills] = useState<any[]>([]);
+  const [skillCategories, setSkillCategories] = useState<any[]>([]);
   const [interests, setInterests] = useState<any[]>([]);
   const [experiences, setExperiences] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
-  const [newSkill, setNewSkill] = useState("");
   const [newInterest, setNewInterest] = useState("");
   const [newExp, setNewExp] = useState({ company: "", companyLogoUrl: "", location: "" });
   const [newCert, setNewCert] = useState({ title: "", issuer: "", issue_date: "", expiration_date: "", credential_url: "" });
@@ -20,13 +20,15 @@ export default function AdminProfilePage() {
     Promise.all([
       fetch("/api/profile").then((r) => r.json()),
       fetch("/api/admin/skills").then((r) => r.json()),
+      fetch("/api/admin/skill-categories").then((r) => r.json()),
       fetch("/api/admin/interests").then((r) => r.json()),
       fetch("/api/admin/experience").then((r) => r.json()),
       fetch("/api/admin/certificates").then((r) => r.json()),
       fetch("/api/admin/projects").then((r) => r.json()),
-    ]).then(([u, s, i, e, c, p]) => {
+    ]).then(([u, s, sc, i, e, c, p]) => {
       setUser(u);
       setSkills(Array.isArray(s) ? s : []);
+      setSkillCategories(Array.isArray(sc) ? sc : []);
       setInterests(Array.isArray(i) ? i : []);
       setExperiences(Array.isArray(e) ? e : []);
       setCertificates(Array.isArray(c) ? c : []);
@@ -59,16 +61,52 @@ export default function AdminProfilePage() {
     alert("Profile updated!");
   };
 
-  const addSkill = async () => {
-    if (!newSkill.trim()) return;
-    await fetch("/api/admin/skills/create", { method: "POST", body: JSON.stringify({ skill: newSkill }) });
-    setSkills(await refresh("/api/admin/skills"));
-    setNewSkill("");
+  const reloadSkills = async () => setSkills(await refresh("/api/admin/skills"));
+
+  const reloadSkillCategories = async () =>
+    setSkillCategories(await refresh("/api/admin/skill-categories"));
+
+  const addSkill = async (skill: string, categoryId: number | null) => {
+    if (!skill.trim()) return;
+    await fetch("/api/admin/skills/create", { method: "POST", body: JSON.stringify({ skill, categoryId }) });
+    await reloadSkills();
   };
 
   const deleteSkill = async (id: string) => {
     await fetch("/api/admin/skills/delete", { method: "POST", body: JSON.stringify({ id }) });
-    setSkills(await refresh("/api/admin/skills"));
+    await reloadSkills();
+  };
+
+  const moveSkill = async (id: string, categoryId: number | null) => {
+    await fetch("/api/admin/skills/update", { method: "POST", body: JSON.stringify({ id, categoryId }) });
+    await reloadSkills();
+  };
+
+  const reorderSkills = async (ids: string[]) => {
+    await fetch("/api/admin/skills/reorder", { method: "POST", body: JSON.stringify({ ids }) });
+  };
+
+  const addSkillCategory = async (name: string) => {
+    if (!name.trim()) return;
+    await fetch("/api/admin/skill-categories/create", { method: "POST", body: JSON.stringify({ name }) });
+    await reloadSkillCategories();
+  };
+
+  const renameSkillCategory = async (id: number, name: string) => {
+    if (!name.trim()) return;
+    await fetch("/api/admin/skill-categories/update", { method: "POST", body: JSON.stringify({ id, name }) });
+    await reloadSkillCategories();
+    await reloadSkills();
+  };
+
+  const deleteSkillCategory = async (id: number) => {
+    await fetch("/api/admin/skill-categories/delete", { method: "POST", body: JSON.stringify({ id }) });
+    await reloadSkillCategories();
+    await reloadSkills();
+  };
+
+  const reorderSkillCategories = async (ids: number[]) => {
+    await fetch("/api/admin/skill-categories/reorder", { method: "POST", body: JSON.stringify({ ids }) });
   };
 
   const addInterest = async () => {
@@ -162,7 +200,20 @@ export default function AdminProfilePage() {
           )}
           {activeTab === "skills" && (
             <Card>
-              <SkillForm skills={skills} setSkills={setSkills} newSkill={newSkill} setNewSkill={setNewSkill} addSkill={addSkill} deleteSkill={deleteSkill} />
+              <SkillForm
+                skills={skills}
+                setSkills={setSkills}
+                categories={skillCategories}
+                setCategories={setSkillCategories}
+                addSkill={addSkill}
+                deleteSkill={deleteSkill}
+                moveSkill={moveSkill}
+                reorderSkills={reorderSkills}
+                addCategory={addSkillCategory}
+                renameCategory={renameSkillCategory}
+                deleteCategory={deleteSkillCategory}
+                reorderCategories={reorderSkillCategories}
+              />
             </Card>
           )}
           {activeTab === "interests" && (
@@ -409,79 +460,276 @@ function ProfileForm({ user, setUser, saveProfile }: any) {
 /* =========================================================
     SKILLS FORM
 ========================================================= */
-function SkillForm({ skills, setSkills, newSkill, setNewSkill, addSkill, deleteSkill }: any) {
-  const dragItem = useRef<number | null>(null);
-  const dragOver = useRef<number | null>(null);
-  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
+function SkillForm({
+  skills,
+  setSkills,
+  categories,
+  setCategories,
+  addSkill,
+  deleteSkill,
+  moveSkill,
+  reorderSkills,
+  addCategory,
+  renameCategory,
+  deleteCategory,
+  reorderCategories,
+}: any) {
+  const [newCategory, setNewCategory] = useState("");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  const handleDragStart = (index: number) => {
-    dragItem.current = index;
-    setDraggingIdx(index);
+  // skill yang sedang di-drag: { id, key } — key = id kategori atau "none"
+  const [dragSkill, setDragSkill] = useState<{ id: string; key: string } | null>(null);
+  const [overSkillId, setOverSkillId] = useState<string | null>(null);
+  const [overCategoryKey, setOverCategoryKey] = useState<string | null>(null);
+
+  const dragCategory = useRef<number | null>(null);
+  const overCategory = useRef<number | null>(null);
+  const [draggingCatIdx, setDraggingCatIdx] = useState<number | null>(null);
+
+  const keyOf = (categoryId: any) => String(categoryId ?? "none");
+  const skillsIn = (key: string) => skills.filter((s: any) => keyOf(s.categoryId) === key);
+
+  const uncategorized = skillsIn("none");
+
+  /* ---------- skill: reorder di dalam kategori ---------- */
+  const reorderWithin = (key: string, fromId: string, toId: string) => {
+    const group = skillsIn(key);
+    const from = group.findIndex((s: any) => String(s.id) === String(fromId));
+    const to = group.findIndex((s: any) => String(s.id) === String(toId));
+    if (from < 0 || to < 0 || from === to) return;
+
+    const reordered = [...group];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+
+    // susun ulang array global: posisi grup ini diisi urutan baru
+    let cursor = 0;
+    setSkills(
+      skills.map((s: any) => (keyOf(s.categoryId) === key ? reordered[cursor++] : s))
+    );
+    reorderSkills(reordered.map((s: any) => s.id));
   };
 
-  const handleDragEnter = (index: number) => {
-    dragOver.current = index;
-    setOverIdx(index);
-  };
-
-  const handleDragEnd = () => {
-    if (dragItem.current !== null && dragOver.current !== null && dragItem.current !== dragOver.current) {
-      const reordered = [...skills];
-      const [moved] = reordered.splice(dragItem.current, 1);
-      reordered.splice(dragOver.current, 0, moved);
-      setSkills(reordered);
-      fetch("/api/admin/skills/reorder", {
-        method: "POST",
-        body: JSON.stringify({ ids: reordered.map((s: any) => s.id) }),
-      });
+  /* ---------- skill: drop ke kategori lain ---------- */
+  const handleDropOnCategory = (key: string) => {
+    if (dragSkill && dragSkill.key !== key) {
+      moveSkill(dragSkill.id, key === "none" ? null : Number(key));
     }
-    dragItem.current = null;
-    dragOver.current = null;
-    setDraggingIdx(null);
-    setOverIdx(null);
+    setDragSkill(null);
+    setOverSkillId(null);
+    setOverCategoryKey(null);
   };
+
+  /* ---------- kategori: reorder ---------- */
+  const handleCatDragEnd = () => {
+    if (
+      dragCategory.current !== null &&
+      overCategory.current !== null &&
+      dragCategory.current !== overCategory.current
+    ) {
+      const reordered = [...categories];
+      const [moved] = reordered.splice(dragCategory.current, 1);
+      reordered.splice(overCategory.current, 0, moved);
+      setCategories(reordered);
+      reorderCategories(reordered.map((c: any) => c.id));
+    }
+    dragCategory.current = null;
+    overCategory.current = null;
+    setDraggingCatIdx(null);
+  };
+
+  const submitDraft = (key: string, categoryId: number | null) => {
+    const value = (drafts[key] || "").trim();
+    if (!value) return;
+    addSkill(value, categoryId);
+    setDrafts((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  const renderPill = (s: any, key: string) => (
+    <div
+      key={s.id}
+      draggable
+      onDragStart={() => setDragSkill({ id: s.id, key })}
+      onDragEnter={() => {
+        setOverSkillId(s.id);
+        if (dragSkill && dragSkill.key === key && String(dragSkill.id) !== String(s.id)) {
+          reorderWithin(key, dragSkill.id, s.id);
+        }
+      }}
+      onDragEnd={() => {
+        setDragSkill(null);
+        setOverSkillId(null);
+        setOverCategoryKey(null);
+      }}
+      onDragOver={(e: any) => e.preventDefault()}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border select-none transition-all cursor-grab active:cursor-grabbing
+        ${dragSkill && String(dragSkill.id) === String(s.id) ? "opacity-40 scale-95" : ""}
+        ${overSkillId === s.id && dragSkill && String(dragSkill.id) !== String(s.id)
+          ? "border-blue-500 bg-blue-500/10 text-white"
+          : "bg-gray-700/50 border-gray-600/50 text-gray-200"
+        }`}
+    >
+      <span className="text-gray-500 text-xs">⠿</span>
+      <span>{s.skill}</span>
+      <button
+        onClick={() => deleteSkill(s.id)}
+        className="text-gray-500 hover:text-red-400 transition-colors leading-none"
+      >
+        ✕
+      </button>
+    </div>
+  );
+
+  const renderAddInput = (key: string, categoryId: number | null) => (
+    <div className="flex gap-2 mt-3">
+      <input
+        className="flex-1 rounded-xl px-3 py-2 text-sm bg-gray-900/60 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
+        placeholder="Add a skill..."
+        value={drafts[key] || ""}
+        onChange={(e: any) => setDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
+        onKeyDown={(e: any) => e.key === "Enter" && submitDraft(key, categoryId)}
+      />
+      <BtnPrimary onClick={() => submitDraft(key, categoryId)}>Add</BtnPrimary>
+    </div>
+  );
 
   return (
     <div className="space-y-5">
+      {/* tambah kategori */}
       <div className="flex gap-3 flex-col sm:flex-row">
         <input
           className="flex-1 rounded-xl px-4 py-2.5 text-sm bg-gray-900/60 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
-          placeholder="Add a skill..."
-          value={newSkill}
-          onChange={(e: any) => setNewSkill(e.target.value)}
-          onKeyDown={(e: any) => e.key === "Enter" && addSkill()}
+          placeholder="Add a category... (Frontend, Backend, Database)"
+          value={newCategory}
+          onChange={(e: any) => setNewCategory(e.target.value)}
+          onKeyDown={(e: any) => {
+            if (e.key === "Enter") {
+              addCategory(newCategory);
+              setNewCategory("");
+            }
+          }}
         />
-        <BtnPrimary onClick={addSkill}>Add</BtnPrimary>
+        <BtnPrimary
+          onClick={() => {
+            addCategory(newCategory);
+            setNewCategory("");
+          }}
+        >
+          Add Category
+        </BtnPrimary>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {skills.length === 0 && <p className="text-gray-500 text-sm">No skills added yet.</p>}
-        {skills.map((s: any, index: number) => (
+      {categories.length === 0 && uncategorized.length === 0 && (
+        <p className="text-gray-500 text-sm">No skills added yet.</p>
+      )}
+
+      {/* daftar kategori */}
+      {categories.map((cat: any, index: number) => {
+        const key = keyOf(cat.id);
+        const items = skillsIn(key);
+        return (
           <div
-            key={s.id}
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragEnter={() => handleDragEnter(index)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e: any) => e.preventDefault()}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm border select-none transition-all cursor-grab active:cursor-grabbing
-              ${draggingIdx === index ? "opacity-40 scale-95" : ""}
-              ${overIdx === index && draggingIdx !== index
-                ? "border-blue-500 bg-blue-500/10 text-white"
-                : "bg-gray-700/50 border-gray-600/50 text-gray-200"
+            key={cat.id}
+            onDragOver={(e: any) => {
+              e.preventDefault();
+              if (dragSkill && dragSkill.key !== key) setOverCategoryKey(key);
+            }}
+            onDragLeave={() => setOverCategoryKey((prev) => (prev === key ? null : prev))}
+            onDrop={() => handleDropOnCategory(key)}
+            className={`rounded-2xl border p-4 transition-all
+              ${draggingCatIdx === index ? "opacity-40" : ""}
+              ${overCategoryKey === key
+                ? "border-blue-500 bg-blue-500/[0.06]"
+                : "border-gray-700/50 bg-gray-900/30"
               }`}
           >
-            <span className="text-gray-500 text-xs">⠿</span>
-            <span>{s.skill}</span>
-            <button onClick={() => deleteSkill(s.id)} className="text-gray-500 hover:text-red-400 transition-colors leading-none">✕</button>
-          </div>
-        ))}
-      </div>
+            <div className="flex items-center gap-2">
+              <span
+                draggable
+                onDragStart={() => {
+                  dragCategory.current = index;
+                  setDraggingCatIdx(index);
+                }}
+                onDragEnter={() => {
+                  if (draggingCatIdx !== null) overCategory.current = index;
+                }}
+                onDragEnd={handleCatDragEnd}
+                className="text-gray-500 text-xs cursor-grab active:cursor-grabbing"
+                title="Drag untuk mengubah urutan kategori"
+              >
+                ⠿
+              </span>
+              <input
+                className="flex-1 bg-transparent text-sm font-semibold text-white focus:outline-none focus:bg-gray-800/60 rounded-lg px-2 py-1 transition"
+                defaultValue={cat.name}
+                onBlur={(e: any) => {
+                  if (e.target.value.trim() && e.target.value !== cat.name) {
+                    renameCategory(cat.id, e.target.value);
+                  } else {
+                    e.target.value = cat.name;
+                  }
+                }}
+                onKeyDown={(e: any) => e.key === "Enter" && e.target.blur()}
+              />
+              <span className="text-xs text-gray-500 tabular-nums">{items.length}</span>
+              <button
+                onClick={() => {
+                  if (confirm(`Hapus kategori "${cat.name}"? Skill di dalamnya jadi uncategorized.`)) {
+                    deleteCategory(cat.id);
+                  }
+                }}
+                className="text-gray-500 hover:text-red-400 transition-colors text-sm leading-none px-1"
+              >
+                ✕
+              </button>
+            </div>
 
-      {skills.length > 1 && (
-        <p className="text-xs text-gray-600">Drag pill untuk mengubah urutan</p>
+            <div className="flex flex-wrap gap-2 mt-3 min-h-[38px]">
+              {items.length === 0 && (
+                <p className="text-gray-600 text-xs self-center">Kosong — tarik skill ke sini</p>
+              )}
+              {items.map((s: any) => renderPill(s, key))}
+            </div>
+
+            {renderAddInput(key, cat.id)}
+          </div>
+        );
+      })}
+
+      {/* skill tanpa kategori */}
+      {(uncategorized.length > 0 || categories.length > 0) && (
+        <div
+          onDragOver={(e: any) => {
+            e.preventDefault();
+            if (dragSkill && dragSkill.key !== "none") setOverCategoryKey("none");
+          }}
+          onDragLeave={() => setOverCategoryKey((prev) => (prev === "none" ? null : prev))}
+          onDrop={() => handleDropOnCategory("none")}
+          className={`rounded-2xl border border-dashed p-4 transition-all
+            ${overCategoryKey === "none"
+              ? "border-blue-500 bg-blue-500/[0.06]"
+              : "border-gray-700/50 bg-gray-900/20"
+            }`}
+        >
+          <div className="flex items-center gap-2">
+            <h4 className="flex-1 text-sm font-semibold text-gray-400">Uncategorized</h4>
+            <span className="text-xs text-gray-500 tabular-nums">{uncategorized.length}</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-3 min-h-[38px]">
+            {uncategorized.length === 0 && (
+              <p className="text-gray-600 text-xs self-center">Semua skill sudah punya kategori</p>
+            )}
+            {uncategorized.map((s: any) => renderPill(s, "none"))}
+          </div>
+
+          {renderAddInput("none", null)}
+        </div>
       )}
+
+      <p className="text-xs text-gray-600">
+        Drag pill untuk mengubah urutan, atau tarik ke kategori lain untuk memindahkan. Klik nama kategori untuk rename.
+      </p>
     </div>
   );
 }
