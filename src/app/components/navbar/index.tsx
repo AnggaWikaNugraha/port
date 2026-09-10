@@ -13,10 +13,17 @@ import {
   UserRound,
 } from 'lucide-react';
 
-const publicNavItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  external?: boolean;
+};
+
+const publicNavItems: NavItem[] = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/pages/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/pages/blog', label: 'Blog', icon: FileText },
+  { href: 'https://knowly-headless-cms.vercel.app/', label: 'Blog', icon: FileText, external: true },
   { href: '/pages/about', label: 'About', icon: UserRound },
   { href: '/pages/language', label: 'Language', icon: Languages },
 ];
@@ -114,21 +121,16 @@ const Navbar = () => {
         aria-label="Primary navigation"
         className="fixed left-2 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 rounded-full border border-white/10 bg-gray-900/90 p-1 text-gray-400 shadow-2xl shadow-black/40 backdrop-blur-xl sm:left-4 sm:p-1.5 xl:left-6"
       >
-        {publicNavItems.map(({ href, label, icon: Icon }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+        {publicNavItems.map(({ href, label, icon: Icon, external }) => {
+          const isActive = external ? false : href === '/' ? pathname === '/' : pathname.startsWith(href);
+          const className = `group relative grid h-9 w-9 place-items-center rounded-full outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white/70 sm:h-11 sm:w-11 ${
+            isActive
+              ? 'bg-white text-gray-950 shadow-lg shadow-black/30'
+              : 'hover:bg-white/[0.08] hover:text-white'
+          }`;
 
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-label={label}
-              aria-current={isActive ? 'page' : undefined}
-              className={`group relative grid h-9 w-9 place-items-center rounded-full outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white/70 sm:h-11 sm:w-11 ${
-                isActive
-                  ? 'bg-white text-gray-950 shadow-lg shadow-black/30'
-                  : 'hover:bg-white/[0.08] hover:text-white'
-              }`}
-            >
+          const content = (
+            <>
               <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
               <span
                 aria-hidden="true"
@@ -136,6 +138,33 @@ const Navbar = () => {
               >
                 {label}
               </span>
+            </>
+          );
+
+          if (external) {
+            return (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className={className}
+              >
+                {content}
+              </a>
+            );
+          }
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              className={className}
+            >
+              {content}
             </Link>
           );
         })}
