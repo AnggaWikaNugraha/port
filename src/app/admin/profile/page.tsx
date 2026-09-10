@@ -240,7 +240,7 @@ export default function AdminProfilePage() {
             </Card>
           )}
           {activeTab === "projects" && (
-            <ProjectForm projects={projects} setProjects={setProjects} />
+            <ProjectForm projects={projects} setProjects={setProjects} allSkills={skills} categories={skillCategories} />
           )}
         </div>
 
@@ -1102,11 +1102,130 @@ const STATUS_COLOR: Record<string, string> = {
   archived: "bg-gray-500/20 text-gray-400 border-gray-500/30",
 };
 
-function ProjectForm({ projects, setProjects }: any) {
+/* =========================================================
+    SKILL PICKER — pilih kategori lalu pilih skill dari master
+========================================================= */
+function SkillPicker({ label = "Tech Stack", allSkills, categories, selectedIds, onChange }: any) {
+  const [activeCat, setActiveCat] = useState<string>("all");
+  const [query, setQuery] = useState("");
+
+  const selected = selectedIds.map(Number);
+  const isPicked = (id: any) => selected.includes(Number(id));
+
+  const toggle = (id: any) => {
+    const n = Number(id);
+    onChange(isPicked(n) ? selected.filter((x: number) => x !== n) : [...selected, n]);
+  };
+
+  const q = query.trim().toLowerCase();
+
+  // pencarian berlaku lintas kategori, kalau kosong ikut kategori aktif
+  const visible = allSkills.filter((s: any) => {
+    if (q) return s.skill.toLowerCase().includes(q);
+    if (activeCat === "all") return true;
+    if (activeCat === "none") return !s.categoryId;
+    return String(s.categoryId) === activeCat;
+  });
+
+  const countIn = (catId: any) =>
+    allSkills.filter((s: any) =>
+      catId === "all" ? true : catId === "none" ? !s.categoryId : String(s.categoryId) === String(catId)
+    ).length;
+
+  const pickedSkills = selected
+    .map((id: number) => allSkills.find((s: any) => Number(s.id) === id))
+    .filter(Boolean);
+
+  const uncategorizedCount = countIn("none");
+
+  const chip = (id: string, name: string, count: number) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => setActiveCat(id)}
+      className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs transition-colors border ${
+        activeCat === id && !q
+          ? "bg-blue-600 border-blue-500 text-white"
+          : "bg-gray-800/60 border-gray-700 text-gray-400 hover:text-gray-200"
+      }`}
+    >
+      {name} <span className="opacity-60">{count}</span>
+    </button>
+  );
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-xs text-gray-400">{label}</label>
+        <span className="text-xs text-gray-500">{selected.length} dipilih</span>
+      </div>
+
+      {/* yang sudah dipilih */}
+      <div className="flex flex-wrap gap-1.5 min-h-[32px] rounded-xl border border-gray-700 bg-gray-900/60 p-2">
+        {pickedSkills.length === 0 && (
+          <span className="text-xs text-gray-600 self-center px-1">Belum ada skill dipilih</span>
+        )}
+        {pickedSkills.map((s: any) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => toggle(s.id)}
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg bg-blue-500/15 border border-blue-500/40 text-blue-200 hover:bg-red-500/15 hover:border-red-500/40 hover:text-red-200 transition-colors"
+            title="Klik untuk melepas"
+          >
+            {s.skill}
+            <span className="opacity-60">✕</span>
+          </button>
+        ))}
+      </div>
+
+      {/* filter kategori + pencarian */}
+      <input
+        className="w-full rounded-xl px-3 py-2 text-sm bg-gray-900/60 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
+        placeholder="Cari skill di semua kategori..."
+        value={query}
+        onChange={(e: any) => setQuery(e.target.value)}
+      />
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {chip("all", "Semua", countIn("all"))}
+        {categories.map((c: any) => chip(String(c.id), c.name, countIn(c.id)))}
+        {uncategorizedCount > 0 && chip("none", "Tanpa kategori", uncategorizedCount)}
+      </div>
+
+      {/* daftar skill yang bisa dipilih */}
+      <div className="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto rounded-xl border border-gray-700/60 bg-gray-900/30 p-2">
+        {visible.length === 0 && (
+          <p className="text-xs text-gray-600 px-1 py-2">
+            {q ? `Tidak ada skill cocok dengan "${query}".` : "Kategori ini masih kosong."} Tambah dulu di tab Skills.
+          </p>
+        )}
+        {visible.map((s: any) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => toggle(s.id)}
+            className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
+              isPicked(s.id)
+                ? "bg-blue-500/20 border-blue-500/50 text-blue-200"
+                : "bg-gray-800/60 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white"
+            }`}
+          >
+            {isPicked(s.id) && <span className="mr-1">✓</span>}
+            {s.skill}
+            {q && s.categoryName && <span className="ml-1.5 opacity-50">{s.categoryName}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [newProj, setNewProj] = useState({
     title: "", description: "", role: "", company: "",
-    techStack: "", year: "", status: "completed",
+    skillIds: [] as number[], year: "", status: "completed",
     featured: false, isPrivate: false,
     demoUrl: "", repoUrl: "", coverImage: "",
   });
@@ -1134,11 +1253,11 @@ function ProjectForm({ projects, setProjects }: any) {
     if (!newProj.title.trim()) return;
     await fetch("/api/admin/projects/create", {
       method: "POST",
-      body: JSON.stringify({ ...newProj, techStack: newProj.techStack.split(",").map((t: string) => t.trim()).filter(Boolean) }),
+      body: JSON.stringify(newProj),
     });
     const updated = await fetch("/api/admin/projects").then(r => r.json());
     setProjects(Array.isArray(updated) ? updated : []);
-    setNewProj({ title: "", description: "", role: "", company: "", techStack: "", year: "", status: "completed", featured: false, isPrivate: false, demoUrl: "", repoUrl: "", coverImage: "" });
+    setNewProj({ title: "", description: "", role: "", company: "", skillIds: [], year: "", status: "completed", featured: false, isPrivate: false, demoUrl: "", repoUrl: "", coverImage: "" });
     setShowAdd(false);
   };
 
@@ -1170,7 +1289,12 @@ function ProjectForm({ projects, setProjects }: any) {
             <Input label="Demo URL" value={newProj.demoUrl} onChange={(e: any) => setNewProj({ ...newProj, demoUrl: e.target.value })} />
             <Input label="Repo URL" value={newProj.repoUrl} onChange={(e: any) => setNewProj({ ...newProj, repoUrl: e.target.value })} />
           </div>
-          <Input label="Tech Stack (comma separated)" value={newProj.techStack} onChange={(e: any) => setNewProj({ ...newProj, techStack: e.target.value })} />
+          <SkillPicker
+            allSkills={allSkills}
+            categories={categories}
+            selectedIds={newProj.skillIds}
+            onChange={(ids: number[]) => setNewProj({ ...newProj, skillIds: ids })}
+          />
           <ImageUpload label="Cover Image" value={newProj.coverImage} onChange={(url) => setNewProj({ ...newProj, coverImage: url })} />
           <Input label="Description" type="textarea" value={newProj.description} onChange={(e: any) => setNewProj({ ...newProj, description: e.target.value })} />
           <div className="flex items-center gap-4 text-sm">
@@ -1210,6 +1334,8 @@ function ProjectForm({ projects, setProjects }: any) {
           updateLocalProject={updateLocalProject}
           updateLocalFlow={updateLocalFlow}
           setProjects={setProjects}
+          allSkills={allSkills}
+          categories={categories}
         />
       ))}
       {projects.length > 1 && <p className="text-xs text-gray-600">Drag card untuk mengubah urutan</p>}
@@ -1217,10 +1343,10 @@ function ProjectForm({ projects, setProjects }: any) {
   );
 }
 
-function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnter, onDragEnd, updateLocalProject, updateLocalFlow, setProjects }: any) {
+function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnter, onDragEnd, updateLocalProject, updateLocalFlow, setProjects, allSkills, categories }: any) {
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [techInput, setTechInput] = useState((proj.techStack || []).join(", "));
+  const [skillIds, setSkillIds] = useState<number[]>((proj.skillIds || []).map(Number));
 
   const dragFlowItem = useRef<number | null>(null);
   const dragFlowOver = useRef<number | null>(null);
@@ -1247,9 +1373,14 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
   };
 
   const saveProject = async () => {
-    const payload = { ...proj, techStack: techInput.split(",").map((t: string) => t.trim()).filter(Boolean) };
-    await fetch("/api/admin/projects/update", { method: "POST", body: JSON.stringify(payload) });
-    updateLocalProject(proj.id, "techStack", payload.techStack);
+    await fetch("/api/admin/projects/update", { method: "POST", body: JSON.stringify({ ...proj, skillIds }) });
+
+    // pill di header ikut menyesuaikan tanpa perlu reload
+    const picked = skillIds
+      .map(id => allSkills.find((s: any) => Number(s.id) === Number(id)))
+      .filter(Boolean);
+    updateLocalProject(proj.id, "skillIds", skillIds);
+    updateLocalProject(proj.id, "techStack", picked.map((s: any) => s.skill));
     setEditing(false);
   };
 
@@ -1333,7 +1464,12 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
             <Input label="Demo URL" value={proj.demoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "demoUrl", e.target.value)} />
             <Input label="Repo URL" value={proj.repoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "repoUrl", e.target.value)} />
           </div>
-          <Input label="Tech Stack (comma separated)" value={techInput} onChange={(e: any) => setTechInput(e.target.value)} />
+          <SkillPicker
+            allSkills={allSkills}
+            categories={categories}
+            selectedIds={skillIds}
+            onChange={setSkillIds}
+          />
           <ImageUpload label="Cover Image" value={proj.coverImage || ""} onChange={(url) => updateLocalProject(proj.id, "coverImage", url)} />
           <Input label="Description" type="textarea" value={proj.description || ""} onChange={(e: any) => updateLocalProject(proj.id, "description", e.target.value)} />
           <div className="flex items-center gap-4 text-sm">

@@ -20,6 +20,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     const { overview, intro, credentials } = presentProjectDescription(project.description);
     const flows = project.flows ?? [];
     const technologies = project.techStack ?? [];
+    const skillGroups = project.skillGroups ?? [];
     const hasDemo = Boolean(project.demoUrl || credentials.length);
     const sections = [
         ...(overview ? [{ id: 'overview', label: 'Overview' }] : []),
@@ -92,7 +93,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                                 <section id="technologies" className={styles.section}>
                                     <p className={styles.sectionLabel}>Under the hood</p>
                                     <h2>Built with</h2>
-                                    <div className={styles.techStack}>{technologies.map(tech => <span key={tech}>{tech}</span>)}</div>
+                                    <div className={styles.techGroups}>
+                                        {skillGroups.map(group => (
+                                            <div key={group.id ?? group.name} className={styles.techGroup}>
+                                                <h3>{group.name}<span>{group.skills.length}</span></h3>
+                                                <div className={styles.techStack}>
+                                                    {group.skills.map(skill => <span key={skill}>{skill}</span>)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </section>
                             )}
 

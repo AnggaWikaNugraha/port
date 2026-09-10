@@ -1,3 +1,9 @@
+export interface ProjectSkillGroupType {
+    id: number | null; // null = skill tanpa kategori
+    name: string;
+    skills: string[];
+}
+
 export interface ProjectFlowType {
     id: string;
     projectId?: string;
@@ -13,7 +19,8 @@ export interface ProjectType {
     description?: string;
     role?: string;
     company?: string;
-    techStack?: string[];
+    techStack?: string[];       // nama skill, hasil flatten dari skillGroups
+    skillGroups?: ProjectSkillGroupType[];
     year?: string;
     status?: 'completed' | 'in-progress' | 'archived';
     featured?: boolean;

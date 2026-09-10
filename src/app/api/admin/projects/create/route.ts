@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 import { db } from "@/lib/db";
+import { setProjectSkills } from "@/lib/projectSkills";
 import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
@@ -12,15 +13,17 @@ export async function POST(req: Request) {
     const id = `proj_${Date.now()}`;
 
     await db.query(`
-      INSERT INTO projects (id, user_id, title, description, role, company, tech_stack,
+      INSERT INTO projects (id, user_id, title, description, role, company,
         year, status, featured, is_private, demo_url, repo_url, cover_image)
-      VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, body.title, body.description || null, body.role || null, body.company || null,
-      JSON.stringify(body.techStack || []), body.year || null,
+      body.year || null,
       body.status || "completed", body.featured ? 1 : 0, body.isPrivate ? 1 : 0,
       body.demoUrl || null, body.repoUrl || null, body.coverImage || null,
     ]);
+
+    await setProjectSkills(id, body.skillIds);
 
     return Response.json({ success: true, id });
   } catch (err: any) {
