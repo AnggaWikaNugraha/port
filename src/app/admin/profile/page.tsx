@@ -483,7 +483,7 @@ function SkillForm({
   const [overCategoryKey, setOverCategoryKey] = useState<string | null>(null);
 
   const dragCategory = useRef<number | null>(null);
-  const overCategory = useRef<number | null>(null);
+  const catMoved = useRef(false);
   const [draggingCatIdx, setDraggingCatIdx] = useState<number | null>(null);
 
   const keyOf = (categoryId: any) => String(categoryId ?? "none");
@@ -520,21 +520,25 @@ function SkillForm({
     setOverCategoryKey(null);
   };
 
-  /* ---------- kategori: reorder ---------- */
+  /* ---------- kategori: reorder (preview langsung saat dilewati) ---------- */
+  const previewCategoryMove = (toIndex: number) => {
+    const from = dragCategory.current;
+    if (from === null || from === toIndex) return;
+
+    const reordered = [...categories];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    setCategories(reordered);
+    dragCategory.current = toIndex;
+    setDraggingCatIdx(toIndex);
+    catMoved.current = true;
+  };
+
   const handleCatDragEnd = () => {
-    if (
-      dragCategory.current !== null &&
-      overCategory.current !== null &&
-      dragCategory.current !== overCategory.current
-    ) {
-      const reordered = [...categories];
-      const [moved] = reordered.splice(dragCategory.current, 1);
-      reordered.splice(overCategory.current, 0, moved);
-      setCategories(reordered);
-      reorderCategories(reordered.map((c: any) => c.id));
-    }
+    if (catMoved.current) reorderCategories(categories.map((c: any) => c.id));
     dragCategory.current = null;
-    overCategory.current = null;
+    catMoved.current = false;
     setDraggingCatIdx(null);
   };
 
@@ -551,8 +555,9 @@ function SkillForm({
       draggable
       onDragStart={() => setDragSkill({ id: s.id, key })}
       onDragEnter={() => {
+        if (!dragSkill) return;
         setOverSkillId(s.id);
-        if (dragSkill && dragSkill.key === key && String(dragSkill.id) !== String(s.id)) {
+        if (dragSkill.key === key && String(dragSkill.id) !== String(s.id)) {
           reorderWithin(key, dragSkill.id, s.id);
         }
       }}
@@ -630,6 +635,10 @@ function SkillForm({
         return (
           <div
             key={cat.id}
+            onDragEnter={() => {
+              // kartu penuh jadi target, bukan cuma ikon ⠿
+              if (!dragSkill && draggingCatIdx !== null) previewCategoryMove(index);
+            }}
             onDragOver={(e: any) => {
               e.preventDefault();
               if (dragSkill && dragSkill.key !== key) setOverCategoryKey(key);
@@ -637,7 +646,7 @@ function SkillForm({
             onDragLeave={() => setOverCategoryKey((prev) => (prev === key ? null : prev))}
             onDrop={() => handleDropOnCategory(key)}
             className={`rounded-2xl border p-4 transition-all
-              ${draggingCatIdx === index ? "opacity-40" : ""}
+              ${draggingCatIdx === index ? "opacity-50 border-blue-500 ring-2 ring-blue-500/30" : ""}
               ${overCategoryKey === key
                 ? "border-blue-500 bg-blue-500/[0.06]"
                 : "border-gray-700/50 bg-gray-900/30"
@@ -646,15 +655,14 @@ function SkillForm({
             <div className="flex items-center gap-2">
               <span
                 draggable
-                onDragStart={() => {
+                onDragStart={(e: any) => {
+                  e.stopPropagation();
                   dragCategory.current = index;
+                  catMoved.current = false;
                   setDraggingCatIdx(index);
                 }}
-                onDragEnter={() => {
-                  if (draggingCatIdx !== null) overCategory.current = index;
-                }}
                 onDragEnd={handleCatDragEnd}
-                className="text-gray-500 text-xs cursor-grab active:cursor-grabbing"
+                className="text-gray-500 hover:text-gray-300 text-sm cursor-grab active:cursor-grabbing px-1 transition-colors"
                 title="Drag untuk mengubah urutan kategori"
               >
                 ⠿
