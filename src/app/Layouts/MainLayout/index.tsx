@@ -7,13 +7,14 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const usesTopNavigation = pathname.startsWith('/admin') || pathname === '/pages/language';
   const isLogin = pathname === '/pages/login';
+  const isProjects = pathname === '/pages/projects';
 
   return (
     <div className='min-h-screen bg-gray-950 text-white'>
       <Navbar />
       <div
         className={`min-h-screen flex flex-col ${
-          usesTopNavigation ? 'pt-16' : isLogin ? '' : 'pl-16 xl:pl-0'
+          usesTopNavigation ? 'pt-16' : isLogin ? '' : isProjects ? 'sm:pl-20 xl:pl-0' : 'pl-16 xl:pl-0'
         }`}
       >
         {children}

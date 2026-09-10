@@ -4,59 +4,79 @@ import { useEffect, useState } from 'react';
 import { fetchProjects } from '../services';
 import { ProjectType } from '../types';
 import Project from './project';
+import styles from '../projects.module.css';
 
-function SkeletonRow() {
-    return (
-        <div className="animate-pulse overflow-hidden rounded-2xl border border-white/[0.06] bg-gray-900/50 sm:min-h-[580px] lg:min-h-[610px]">
-            <div className="h-40 w-full bg-gray-800/60 sm:h-[260px] lg:h-[280px]" />
-            <div className="flex flex-1 flex-col gap-2 p-4 sm:p-6">
-                <div className="h-3 bg-gray-800/60 rounded-full w-1/3" />
-                <div className="h-5 bg-gray-800/60 rounded-full w-4/5" />
-                <div className="h-4 bg-gray-800/40 rounded-full w-full" />
-                <div className="h-4 bg-gray-800/40 rounded-full w-3/4" />
-                <div className="flex gap-1.5 mt-1">
-                    <div className="h-4 w-14 bg-gray-800/40 rounded-full" />
-                    <div className="h-4 w-12 bg-gray-800/40 rounded-full" />
-                    <div className="h-4 w-16 bg-gray-800/40 rounded-full" />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-const ProjectsPage = () => {
+export default function Projects() {
     const [projects, setProjects] = useState<ProjectType[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+    const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
-        fetchProjects().then(data => {
-            setProjects(data);
-            setLoading(false);
-        });
-    }, []);
+        let active = true;
+        fetchProjects()
+            .then(data => { if (active) setProjects(data); })
+            .catch(() => { if (active) setError(true); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [attempt]);
 
     if (loading) {
         return (
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-                {[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}
+            <div className={styles.loading} role="status" aria-label="Loading projects">
+                <div className={`${styles.skeleton} ${styles.skeletonFeatured}`} />
+                <div className={styles.grid}>
+                    <div className={styles.skeleton} />
+                    <div className={styles.skeleton} />
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={styles.empty} role="alert">
+                <h2>Projects couldn&apos;t load.</h2>
+                <p>Please try again in a moment.</p>
+                <button type="button" onClick={() => {
+                    setLoading(true);
+                    setError(false);
+                    setAttempt(value => value + 1);
+                }}>Try again ↗</button>
             </div>
         );
     }
 
     if (projects.length === 0) {
         return (
-            <div className="text-center py-24 text-gray-600">
-                <p className="text-5xl mb-4">✦</p>
-                <p className="text-lg">No projects yet.</p>
+            <div className={styles.empty}>
+                <h2>Good things are in the works.</h2>
+                <p>New projects will appear here soon.</p>
             </div>
         );
     }
 
+    const featured = projects.find(project => project.featured) ?? projects[0];
+    const remaining = projects.filter(project => project.id !== featured.id);
+
     return (
-        <div className="grid gap-3 sm:grid-cols-2 sm:items-stretch sm:gap-4">
-            {projects.map(p => <Project key={p.id} project={p} />)}
+        <div className={styles.collection}>
+            <section aria-label="Project spotlight">
+                <Project project={featured} spotlight />
+            </section>
+            {remaining.length > 0 && (
+                <section aria-labelledby="more-projects-title">
+                    <div className={styles.sectionHeading}>
+                        <h2 id="more-projects-title">More projects <span>{String(remaining.length).padStart(2, '0')}</span></h2>
+                        <span>A little more of what I do</span>
+                    </div>
+                    <div className={styles.grid}>
+                        {remaining.map((project, index) => (
+                            <Project key={project.id} project={project} index={index + 1} />
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     );
-};
-
-export default ProjectsPage;
+}

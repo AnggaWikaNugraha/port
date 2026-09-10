@@ -34,6 +34,7 @@ const Navbar = () => {
   const isAdmin = pathname.startsWith('/admin');
   const isLanguageLab = pathname === '/pages/language';
   const isLogin = pathname === '/pages/login';
+  const isProjects = pathname === '/pages/projects';
 
   const logout = () => {
     document.cookie = 'token=; Max-Age=0; path=/';
@@ -119,13 +120,15 @@ const Navbar = () => {
       {/* Floating side navigation */}
       <nav
         aria-label="Primary navigation"
-        className="fixed left-2 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 rounded-full border border-white/10 bg-gray-900/90 p-1 text-gray-400 shadow-2xl shadow-black/40 backdrop-blur-xl sm:left-4 sm:p-1.5 xl:left-6"
+        className={isProjects
+          ? 'fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 gap-1 rounded-full border border-white/10 bg-[#1b211e]/95 p-1.5 text-gray-400 shadow-xl backdrop-blur-xl sm:bottom-auto sm:left-4 sm:top-1/2 sm:translate-x-0 sm:-translate-y-1/2 sm:flex-col xl:left-6'
+          : 'fixed left-2 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-1 rounded-full border border-white/10 bg-gray-900/90 p-1 text-gray-400 shadow-2xl shadow-black/40 backdrop-blur-xl sm:left-4 sm:p-1.5 xl:left-6'}
       >
         {publicNavItems.map(({ href, label, icon: Icon, external }) => {
           const isActive = external ? false : href === '/' ? pathname === '/' : pathname.startsWith(href);
-          const className = `group relative grid h-9 w-9 place-items-center rounded-full outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white/70 sm:h-11 sm:w-11 ${
+          const className = `group relative grid ${isProjects ? 'h-11 w-11 sm:h-9 sm:w-9' : 'h-9 w-9 sm:h-11 sm:w-11'} place-items-center rounded-full outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white/70 ${
             isActive
-              ? 'bg-white text-gray-950 shadow-lg shadow-black/30'
+              ? isProjects ? 'bg-[#c2e5a0] text-[#171b19]' : 'bg-white text-gray-950 shadow-lg shadow-black/30'
               : 'hover:bg-white/[0.08] hover:text-white'
           }`;
 
@@ -134,7 +137,7 @@ const Navbar = () => {
               <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute left-full ml-3 translate-x-1 whitespace-nowrap rounded-lg border border-white/10 bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-gray-200 opacity-0 shadow-xl transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                className={`${isProjects ? 'hidden sm:block' : ''} pointer-events-none absolute left-full ml-3 translate-x-1 whitespace-nowrap rounded-lg border border-white/10 bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-gray-200 opacity-0 shadow-xl transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100`}
               >
                 {label}
               </span>
