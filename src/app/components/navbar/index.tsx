@@ -146,8 +146,6 @@ const Navbar = () => {
               <a
                 key={href}
                 href={href}
-                target="_blank"
-                rel="noopener noreferrer"
                 aria-label={label}
                 className={className}
               >
