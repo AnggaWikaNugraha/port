@@ -10,6 +10,7 @@ export default function AdminProfilePage() {
   const [experiences, setExperiences] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [projectCategories, setProjectCategories] = useState<any[]>([]);
   const [newInterest, setNewInterest] = useState("");
   const [newExp, setNewExp] = useState({ company: "", companyLogoUrl: "", location: "" });
   const [newCert, setNewCert] = useState({ title: "", issuer: "", issue_date: "", expiration_date: "", credential_url: "" });
@@ -25,7 +26,8 @@ export default function AdminProfilePage() {
       fetch("/api/admin/experience").then((r) => r.json()),
       fetch("/api/admin/certificates").then((r) => r.json()),
       fetch("/api/admin/projects").then((r) => r.json()),
-    ]).then(([u, s, sc, i, e, c, p]) => {
+      fetch("/api/admin/project-categories").then((r) => r.json()),
+    ]).then(([u, s, sc, i, e, c, p, pc]) => {
       setUser(u);
       setSkills(Array.isArray(s) ? s : []);
       setSkillCategories(Array.isArray(sc) ? sc : []);
@@ -33,6 +35,7 @@ export default function AdminProfilePage() {
       setExperiences(Array.isArray(e) ? e : []);
       setCertificates(Array.isArray(c) ? c : []);
       setProjects(Array.isArray(p) ? p : []);
+      setProjectCategories(Array.isArray(pc) ? pc : []);
       setLoading(false);
     });
   }, []);
@@ -46,6 +49,12 @@ export default function AdminProfilePage() {
 
   async function refresh(url: string) {
     return await fetch(url).then((r) => r.json());
+  }
+
+  // beberapa endpoint balas { error } saat gagal — jangan sampai bocor ke .map()
+  async function refreshList(url: string) {
+    const data = await refresh(url);
+    return Array.isArray(data) ? data : [];
   }
 
   function updateLocalExp(id: string, key: string, val: any) {
@@ -107,6 +116,32 @@ export default function AdminProfilePage() {
 
   const reorderSkillCategories = async (ids: number[]) => {
     await fetch("/api/admin/skill-categories/reorder", { method: "POST", body: JSON.stringify({ ids }) });
+  };
+
+  const reloadProjectCategories = async () =>
+    setProjectCategories(await refreshList("/api/admin/project-categories"));
+
+  const addProjectCategory = async (name: string) => {
+    if (!name.trim()) return;
+    await fetch("/api/admin/project-categories/create", { method: "POST", body: JSON.stringify({ name }) });
+    await reloadProjectCategories();
+  };
+
+  const renameProjectCategory = async (id: number, name: string) => {
+    if (!name.trim()) return;
+    await fetch("/api/admin/project-categories/update", { method: "POST", body: JSON.stringify({ id, name }) });
+    await reloadProjectCategories();
+    setProjects(await refreshList("/api/admin/projects"));
+  };
+
+  const deleteProjectCategory = async (id: number) => {
+    await fetch("/api/admin/project-categories/delete", { method: "POST", body: JSON.stringify({ id }) });
+    await reloadProjectCategories();
+    setProjects(await refreshList("/api/admin/projects"));
+  };
+
+  const reorderProjectCategories = async (ids: number[]) => {
+    await fetch("/api/admin/project-categories/reorder", { method: "POST", body: JSON.stringify({ ids }) });
   };
 
   const addInterest = async () => {
@@ -240,7 +275,26 @@ export default function AdminProfilePage() {
             </Card>
           )}
           {activeTab === "projects" && (
-            <ProjectForm projects={projects} setProjects={setProjects} allSkills={skills} categories={skillCategories} />
+            <div className="space-y-4">
+              <Card>
+                <ProjectCategoryManager
+                  categories={projectCategories}
+                  setCategories={setProjectCategories}
+                  projects={projects}
+                  addCategory={addProjectCategory}
+                  renameCategory={renameProjectCategory}
+                  deleteCategory={deleteProjectCategory}
+                  reorderCategories={reorderProjectCategories}
+                />
+              </Card>
+              <ProjectForm
+                projects={projects}
+                setProjects={setProjects}
+                allSkills={skills}
+                categories={skillCategories}
+                projectCategories={projectCategories}
+              />
+            </div>
           )}
         </div>
 
@@ -1221,10 +1275,149 @@ function SkillPicker({ label = "Tech Stack", allSkills, categories, selectedIds,
   );
 }
 
-function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
+/* =========================================================
+    PROJECT CATEGORIES
+========================================================= */
+function ProjectCategoryManager({
+  categories,
+  setCategories,
+  projects,
+  addCategory,
+  renameCategory,
+  deleteCategory,
+  reorderCategories,
+}: any) {
+  const [newCategory, setNewCategory] = useState("");
+
+  const list: any[] = Array.isArray(categories) ? categories : [];
+  const projectList: any[] = Array.isArray(projects) ? projects : [];
+
+  const countOf = (id: number) =>
+    projectList.filter((p: any) => Number(p.categoryId) === Number(id)).length;
+
+  const move = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= list.length) return;
+
+    const reordered = [...list];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setCategories(reordered);
+    reorderCategories(reordered.map((c: any) => c.id));
+  };
+
+  const submit = () => {
+    addCategory(newCategory);
+    setNewCategory("");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-white">Project Types</h3>
+        <p className="text-xs text-gray-500 mt-1">
+          Kategori jenis project (E-commerce, LMS, CMS, ...). Urutannya menentukan urutan section di halaman About.
+        </p>
+      </div>
+
+      <div className="flex gap-3 flex-col sm:flex-row">
+        <input
+          className="flex-1 rounded-xl px-4 py-2.5 text-sm bg-gray-900/60 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
+          placeholder="Add a project type... (E-commerce, LMS, CMS)"
+          value={newCategory}
+          onChange={(e: any) => setNewCategory(e.target.value)}
+          onKeyDown={(e: any) => e.key === "Enter" && submit()}
+        />
+        <BtnPrimary onClick={submit}>Add Type</BtnPrimary>
+      </div>
+
+      {list.length === 0 ? (
+        <p className="text-gray-500 text-sm">
+          Belum ada kategori. Project tanpa kategori tidak muncul di section &quot;Project types&quot;.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {list.map((cat: any, index: number) => (
+            <div
+              key={cat.id}
+              className="flex items-center gap-2 rounded-xl border border-gray-700/50 bg-gray-900/30 px-3 py-2"
+            >
+              <div className="flex flex-col">
+                <button
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  className="text-gray-500 hover:text-gray-200 disabled:opacity-25 disabled:hover:text-gray-500 text-[10px] leading-none transition-colors"
+                  title="Naikkan urutan"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => move(index, 1)}
+                  disabled={index === list.length - 1}
+                  className="text-gray-500 hover:text-gray-200 disabled:opacity-25 disabled:hover:text-gray-500 text-[10px] leading-none transition-colors mt-0.5"
+                  title="Turunkan urutan"
+                >
+                  ▼
+                </button>
+              </div>
+              <input
+                className="flex-1 bg-transparent text-sm font-medium text-white focus:outline-none focus:bg-gray-800/60 rounded-lg px-2 py-1 transition"
+                defaultValue={cat.name}
+                onBlur={(e: any) => {
+                  if (e.target.value.trim() && e.target.value !== cat.name) {
+                    renameCategory(cat.id, e.target.value);
+                  } else {
+                    e.target.value = cat.name;
+                  }
+                }}
+                onKeyDown={(e: any) => e.key === "Enter" && e.target.blur()}
+              />
+              <span className="text-xs text-gray-500 tabular-nums">{countOf(cat.id)}</span>
+              <button
+                onClick={() => {
+                  if (confirm(`Hapus kategori "${cat.name}"? Project di dalamnya tidak ikut terhapus, hanya hilang dari section Project types.`)) {
+                    deleteCategory(cat.id);
+                  }
+                }}
+                className="text-gray-500 hover:text-red-400 transition-colors text-sm leading-none px-1"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectCategorySelect({ value, onChange, categories }: any) {
+  const list: any[] = Array.isArray(categories) ? categories : [];
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-gray-400">Project Type</label>
+      <select
+        value={value ?? ""}
+        onChange={(e: any) => onChange(e.target.value ? Number(e.target.value) : null)}
+        className="w-full rounded-xl px-3 py-2.5 text-sm bg-gray-900/60 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
+      >
+        <option value="">— Tanpa kategori —</option>
+        {list.map((c: any) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+      {list.length === 0 && (
+        <p className="text-xs text-gray-600">Tambah kategori dulu di panel Project Types di atas.</p>
+      )}
+    </div>
+  );
+}
+
+function ProjectForm({ projects, setProjects, allSkills, categories, projectCategories }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [newProj, setNewProj] = useState({
     title: "", description: "", role: "", company: "",
+    categoryId: null as number | null,
     skillIds: [] as number[], year: "", status: "completed",
     featured: false, isPrivate: false,
     demoUrl: "", repoUrl: "", coverImage: "",
@@ -1257,7 +1450,7 @@ function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
     });
     const updated = await fetch("/api/admin/projects").then(r => r.json());
     setProjects(Array.isArray(updated) ? updated : []);
-    setNewProj({ title: "", description: "", role: "", company: "", skillIds: [], year: "", status: "completed", featured: false, isPrivate: false, demoUrl: "", repoUrl: "", coverImage: "" });
+    setNewProj({ title: "", description: "", role: "", company: "", categoryId: null, skillIds: [], year: "", status: "completed", featured: false, isPrivate: false, demoUrl: "", repoUrl: "", coverImage: "" });
     setShowAdd(false);
   };
 
@@ -1289,6 +1482,11 @@ function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
             <Input label="Demo URL" value={newProj.demoUrl} onChange={(e: any) => setNewProj({ ...newProj, demoUrl: e.target.value })} />
             <Input label="Repo URL" value={newProj.repoUrl} onChange={(e: any) => setNewProj({ ...newProj, repoUrl: e.target.value })} />
           </div>
+          <ProjectCategorySelect
+            value={newProj.categoryId}
+            onChange={(categoryId: number | null) => setNewProj({ ...newProj, categoryId })}
+            categories={projectCategories}
+          />
           <SkillPicker
             allSkills={allSkills}
             categories={categories}
@@ -1336,6 +1534,7 @@ function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
           setProjects={setProjects}
           allSkills={allSkills}
           categories={categories}
+          projectCategories={projectCategories}
         />
       ))}
       {projects.length > 1 && <p className="text-xs text-gray-600">Drag card untuk mengubah urutan</p>}
@@ -1343,7 +1542,7 @@ function ProjectForm({ projects, setProjects, allSkills, categories }: any) {
   );
 }
 
-function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnter, onDragEnd, updateLocalProject, updateLocalFlow, setProjects, allSkills, categories }: any) {
+function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnter, onDragEnd, updateLocalProject, updateLocalFlow, setProjects, allSkills, categories, projectCategories }: any) {
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [skillIds, setSkillIds] = useState<number[]>((proj.skillIds || []).map(Number));
@@ -1424,6 +1623,7 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-white">{proj.title}</p>
+            {proj.categoryName && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">{proj.categoryName}</span>}
             {proj.featured && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">⭐ Featured</span>}
             {proj.isPrivate && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-400">🔒 Private</span>}
             <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[proj.status] || STATUS_COLOR.completed}`}>
@@ -1464,6 +1664,18 @@ function ProjectItem({ proj, index, draggingIdx, overIdx, onDragStart, onDragEnt
             <Input label="Demo URL" value={proj.demoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "demoUrl", e.target.value)} />
             <Input label="Repo URL" value={proj.repoUrl || ""} onChange={(e: any) => updateLocalProject(proj.id, "repoUrl", e.target.value)} />
           </div>
+          <ProjectCategorySelect
+            value={proj.categoryId ?? null}
+            onChange={(categoryId: number | null) => {
+              updateLocalProject(proj.id, "categoryId", categoryId);
+              updateLocalProject(
+                proj.id,
+                "categoryName",
+                projectCategories.find((c: any) => Number(c.id) === Number(categoryId))?.name ?? null
+              );
+            }}
+            categories={projectCategories}
+          />
           <SkillPicker
             allSkills={allSkills}
             categories={categories}

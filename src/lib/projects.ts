@@ -1,6 +1,12 @@
 import 'server-only';
 
-import { ProjectFlowType, ProjectSkillGroupType, ProjectType } from '@/app/pages/projects/types';
+import {
+    ProjectCardType,
+    ProjectCategoryGroupType,
+    ProjectFlowType,
+    ProjectSkillGroupType,
+    ProjectType,
+} from '@/app/pages/projects/types';
 import { db } from '@/lib/db';
 
 type ProjectRow = Omit<ProjectType, 'flows' | 'techStack' | 'skillGroups'>;
@@ -119,4 +125,103 @@ export async function getPublicProjectById(id: string): Promise<ProjectType | nu
         skillGroups: skills?.groups ?? [],
         flows: await getProjectFlows(row.id),
     } as ProjectType;
+}
+
+/**
+ * Kategori skill yang dipakai sebagai label stack di card "Project types".
+ * Dicocokkan dengan LIKE supaya tahan variasi penulisan (Architecture /
+ * Architektur / Arsitektur) tanpa perlu menyentuh data.
+ */
+const STACK_CATEGORY_PATTERN = 'archite%';
+
+/**
+ * Ambil label stack (MERN, MEVN, Laravue, ...) per project dari master
+ * user_skills — hanya skill yang kategorinya "Architecture".
+ */
+async function getProjectStacks(projectIds: string[], userId: number) {
+    const map = new Map<string, string[]>();
+    for (const id of projectIds) map.set(id, []);
+
+    if (projectIds.length === 0) return map;
+
+    const [rows]: any = await db.query(
+        `
+          SELECT ps.project_id AS projectId, s.skill
+          FROM project_skills ps
+          JOIN user_skills s ON s.id = ps.skill_id
+          JOIN skill_categories c ON c.id = s.category_id
+          WHERE ps.project_id IN (?)
+            AND c.user_id = ?
+            AND LOWER(c.name) LIKE ?
+          ORDER BY ps.sort_order ASC, ps.id ASC
+        `,
+        [projectIds, userId, STACK_CATEGORY_PATTERN]
+    );
+
+    for (const row of rows) {
+        map.get(row.projectId)?.push(row.skill);
+    }
+
+    return map;
+}
+
+/**
+ * Project publik yang sudah punya kategori, dikelompokkan untuk section
+ * "Project types" di halaman About. Project tanpa kategori sengaja tidak
+ * ikut — INNER JOIN sudah menyaringnya.
+ */
+export async function getPublicProjectCategories(userId = 1): Promise<ProjectCategoryGroupType[]> {
+    try {
+        return await queryPublicProjectCategories(userId);
+    } catch (err: any) {
+        // Kode bisa ter-deploy sebelum migrations/003 dijalankan. Kalau tabelnya
+        // memang belum ada, section-nya cukup kosong — halaman About jangan ikut
+        // gagal. Error lain tetap dilempar.
+        if (err?.code === 'ER_NO_SUCH_TABLE') {
+            console.warn('[project-types] migrations/003_project_categories.sql belum dijalankan');
+            return [];
+        }
+        throw err;
+    }
+}
+
+async function queryPublicProjectCategories(userId: number): Promise<ProjectCategoryGroupType[]> {
+    const [rows]: any = await db.query(
+        `
+          SELECT
+            p.id, p.title, p.cover_image AS coverImage,
+            c.id AS categoryId, c.name AS categoryName
+          FROM project_category_map m
+          JOIN projects p ON p.id = m.project_id
+          JOIN project_categories c ON c.id = m.category_id
+          WHERE p.user_id = ? AND p.is_private = 0
+          ORDER BY c.sort_order ASC, c.id ASC, p.sort_order ASC, p.created_at DESC
+        `,
+        [userId]
+    );
+
+    if (rows.length === 0) return [];
+
+    const stackMap = await getProjectStacks(
+        rows.map((row: any) => row.id),
+        userId
+    );
+
+    const groups: ProjectCategoryGroupType[] = [];
+    for (const row of rows) {
+        let group = groups.find(g => g.id === row.categoryId);
+        if (!group) {
+            group = { id: row.categoryId, name: row.categoryName, projects: [] };
+            groups.push(group);
+        }
+
+        group.projects.push({
+            id: row.id,
+            title: row.title,
+            coverImage: row.coverImage,
+            stack: stackMap.get(row.id) ?? [],
+        } as ProjectCardType);
+    }
+
+    return groups;
 }

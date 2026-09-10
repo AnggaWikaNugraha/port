@@ -1,3 +1,5 @@
+import { ProjectCategoryGroupType } from '@/app/pages/projects/types';
+
 export interface UserType {
     id: string;
     name: string;
@@ -23,6 +25,7 @@ export interface UserType {
     skills?: string[];
     skillGroups?: SkillGroupType[];
     interests?: string[];
+    projectCategories?: ProjectCategoryGroupType[];
 
     experience?: ExperienceType[];
     education?: EducationType[];

@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { db } from "@/lib/db";
+import { getPublicProjectCategories } from "@/lib/projects";
 
 export async function GET() {
   try {
@@ -105,6 +106,9 @@ export async function GET() {
       exp.roles = rolesRows; // ⬅ masukkan roles ke experience
     }
 
+    // GET PROJECT TYPES (project publik yang sudah punya kategori)
+    const projectCategories = await getPublicProjectCategories(user.id);
+
     // GET CERTIFICATES
     const [certRows]: any = await db.query(`
       SELECT
@@ -131,6 +135,7 @@ export async function GET() {
       skills,
       skillGroups,
       interests,
+      projectCategories,
       experience: expRows,
       education: [],
       certificates: certRows,

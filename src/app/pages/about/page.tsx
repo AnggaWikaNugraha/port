@@ -3,6 +3,7 @@
 import AvatarSection from "./_components/avatarSection";
 import InfoSection from "./_components/infoSection";
 import SkillsSection from "./_components/skillSection";
+import ProjectTypesSection from "./_components/projectTypesSection";
 import ExperienceSection from "./_components/experienceSection";
 import EducationSection from "./_components/educationSection";
 import CertificatesSection from "./_components/certificateSection";
@@ -53,6 +54,18 @@ const AboutPage = () => {
                 </div>
               </div>
             ))}
+            <div className="space-y-3">
+              <div className="h-3.5 w-24 rounded-full bg-gray-800" />
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="w-40 shrink-0 space-y-2 rounded-2xl bg-gray-900 p-2 sm:w-44">
+                    <div className="aspect-video rounded-xl bg-gray-800" />
+                    <div className="h-3 w-3/4 rounded-full bg-gray-800" />
+                    <div className="h-3 w-1/3 rounded-full bg-gray-800" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -66,6 +79,7 @@ const AboutPage = () => {
         <InfoSection user={user} />
         <ExperienceSection experiences={user.experience} />
         <EducationSection educations={user.education} />
+        <ProjectTypesSection categories={user.projectCategories} />
         <SkillsSection skills={user.skills} skillGroups={user.skillGroups} interests={user.interests} />
         <CertificatesSection certificates={user.certificates} />
       </div>

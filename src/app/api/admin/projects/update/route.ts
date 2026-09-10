@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 import { db } from "@/lib/db";
+import { setProjectCategory } from "@/lib/projectCategories";
 import { setProjectSkills } from "@/lib/projectSkills";
 import jwt from "jsonwebtoken";
 
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
 
     if (body.skillIds !== undefined) {
       await setProjectSkills(body.id, body.skillIds);
+    }
+
+    if (body.categoryId !== undefined) {
+      await setProjectCategory(body.id, body.categoryId);
     }
 
     return Response.json({ success: true });

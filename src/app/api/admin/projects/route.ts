@@ -1,5 +1,6 @@
 export const runtime = "nodejs";
 import { db } from "@/lib/db";
+import { getProjectCategoryMap } from "@/lib/projectCategories";
 import jwt from "jsonwebtoken";
 
 export async function GET(req: Request) {
@@ -17,7 +18,13 @@ export async function GET(req: Request) {
       ORDER BY sort_order ASC, created_at DESC
     `);
 
+    // kategori ditempel dari tabel relasi, bukan dari kolom di projects
+    const categoryMap = await getProjectCategoryMap(projects.map((p: any) => p.id));
+
     for (const p of projects) {
+      p.categoryId = categoryMap.get(p.id)?.categoryId ?? null;
+      p.categoryName = categoryMap.get(p.id)?.categoryName ?? null;
+
       const [flows]: any = await db.query(`
         SELECT id, title, description, image_url AS imageUrl, sort_order AS sortOrder
         FROM project_flows WHERE project_id = ?
