@@ -7,7 +7,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const usesTopNavigation = pathname.startsWith('/admin') || pathname === '/pages/language';
   const isLogin = pathname === '/pages/login';
-  const isProjects = pathname === '/pages/projects';
+  const isProjects = pathname.startsWith('/pages/projects');
 
   return (
     <div className='min-h-screen bg-gray-950 text-white'>

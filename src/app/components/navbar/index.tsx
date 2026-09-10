@@ -34,7 +34,7 @@ const Navbar = () => {
   const isAdmin = pathname.startsWith('/admin');
   const isLanguageLab = pathname === '/pages/language';
   const isLogin = pathname === '/pages/login';
-  const isProjects = pathname === '/pages/projects';
+  const isProjects = pathname.startsWith('/pages/projects');
 
   const logout = () => {
     document.cookie = 'token=; Max-Age=0; path=/';

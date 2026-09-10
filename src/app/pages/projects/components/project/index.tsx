@@ -7,13 +7,7 @@ import { ArrowUpRight, Github, Globe, Layers } from 'lucide-react';
 import ProjectMarkdown from '../projectMarkdown';
 import { ProjectType } from '../../types';
 import styles from '../../projects.module.css';
-
-function displayTitle(title: string) {
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(title)) return title;
-    return title.split('-').map(word => /^(cms|lms|api|ui|ux)$/.test(word)
-        ? word.toUpperCase()
-        : word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
+import { displayProjectTitle } from '../projectPresentation';
 
 export default function Project({ project, spotlight = false, index = 0 }: {
     project: ProjectType;
@@ -23,7 +17,7 @@ export default function Project({ project, spotlight = false, index = 0 }: {
     const [expandedTech, setExpandedTech] = useState(false);
     const [failedImage, setFailedImage] = useState<string | null>(null);
     const techStack = project.techStack ?? [];
-    const title = displayTitle(project.title);
+    const title = displayProjectTitle(project.title);
     const detailHref = `/pages/projects/${project.id}`;
     const Heading = spotlight ? 'h2' : 'h3';
 

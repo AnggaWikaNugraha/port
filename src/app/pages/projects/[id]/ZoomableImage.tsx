@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ImageOff, Minus, Plus, X } from 'lucide-react';
+import styles from './detail.module.css';
 
 type Props = {
     src: string;
@@ -15,104 +17,79 @@ export default function ZoomableImage({ src, alt, aspectClass, className, priori
     const [open, setOpen] = useState(false);
     const [scale, setScale] = useState(1);
     const [pos, setPos] = useState({ x: 0, y: 0 });
-    const draggingRef = useRef(false);
-    const lastPosRef = useRef({ x: 0, y: 0 });
-    const overlayRef = useRef<HTMLDivElement>(null);
-
-    const close = useCallback(() => {
-        setOpen(false);
-        setScale(1);
-        setPos({ x: 0, y: 0 });
-    }, []);
+    const [failedImage, setFailedImage] = useState<string | null>(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const dragRef = useRef<{ x: number; y: number } | null>(null);
+    const reset = useCallback(() => { setScale(1); setPos({ x: 0, y: 0 }); }, []);
+    const close = useCallback(() => { setOpen(false); reset(); dragRef.current = null; }, [reset]);
 
     useEffect(() => {
         if (!open) return;
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        dialog.showModal();
+        const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
-
-        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-        const onWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            setScale(s => Math.min(Math.max(s - e.deltaY * 0.005, 0.25), 6));
+        const wheel = (event: WheelEvent) => {
+            event.preventDefault();
+            setScale(value => Math.min(6, Math.max(1, value - event.deltaY * 0.005)));
         };
-
-        window.addEventListener('keydown', onKey);
-        overlayRef.current?.addEventListener('wheel', onWheel, { passive: false });
-
+        dialog.addEventListener('wheel', wheel, { passive: false });
         return () => {
-            document.body.style.overflow = '';
-            window.removeEventListener('keydown', onKey);
-            overlayRef.current?.removeEventListener('wheel', onWheel);
+            document.body.style.overflow = previousOverflow;
+            dialog.removeEventListener('wheel', wheel);
+            dialog.close();
         };
-    }, [open, close]);
-
-    const onMouseDown = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        draggingRef.current = true;
-        lastPosRef.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: React.MouseEvent) => {
-        if (!draggingRef.current) return;
-        const dx = e.clientX - lastPosRef.current.x;
-        const dy = e.clientY - lastPosRef.current.y;
-        lastPosRef.current = { x: e.clientX, y: e.clientY };
-        setPos(p => ({ x: p.x + dx, y: p.y + dy }));
-    };
-
-    const onMouseUp = () => { draggingRef.current = false; };
+    }, [open]);
 
     return (
         <>
-            <div
-                className={`relative w-full cursor-zoom-in ${aspectClass ?? ''}`}
-                onClick={() => setOpen(true)}
-            >
-                <Image
-                    src={src}
-                    alt={alt}
-                    fill
-                    className={className}
-                    priority={priority}
-                />
-            </div>
-
-            {open && (
-                <div
-                    ref={overlayRef}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 select-none"
-                    onClick={close}
-                    onMouseDown={onMouseDown}
-                    onMouseMove={onMouseMove}
-                    onMouseUp={onMouseUp}
-                    onMouseLeave={onMouseUp}
-                >
-                    <button
-                        type="button"
-                        aria-label="Close"
-                        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
-                        onClick={e => { e.stopPropagation(); close(); }}
-                    >
-                        ✕
-                    </button>
-
-                    <div
-                        style={{ transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`, cursor: draggingRef.current ? 'grabbing' : 'grab' }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={src}
-                            alt={alt}
-                            draggable={false}
-                            style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', display: 'block' }}
-                        />
-                    </div>
-
-                    <p className="pointer-events-none absolute bottom-4 text-xs text-white/30">
-                        Scroll to zoom · Drag to pan · Esc to close
-                    </p>
-                </div>
+            {failedImage === src ? (
+                <div className={`${styles.imageFallback} ${aspectClass || ''}`}><ImageOff size={24} /><span>Preview unavailable</span></div>
+            ) : (
+                <button type="button" className={`${styles.zoomTrigger} ${aspectClass || ''}`} onClick={() => setOpen(true)} aria-label={`Enlarge ${alt}`}>
+                    <Image src={src} alt={alt} fill sizes="(max-width: 639px) 90vw, (max-width: 1100px) 80vw, 940px" className={className} priority={priority} onError={() => setFailedImage(src)} />
+                </button>
             )}
+            <dialog ref={dialogRef} className={styles.viewer} aria-label={`${alt} enlarged`} onClose={close}>
+                {open && <>
+                    <div className={styles.viewerToolbar}>
+                        <p>{alt}</p>
+                        <div className={styles.viewerControls}>
+                            <button type="button" aria-label="Zoom out" disabled={scale <= 1} onClick={() => setScale(value => Math.max(1, value - 0.5))}><Minus size={16} /></button>
+                            <button type="button" aria-label="Reset zoom" onClick={reset}>{Math.round(scale * 100)}%</button>
+                            <button type="button" aria-label="Zoom in" disabled={scale >= 6} onClick={() => setScale(value => Math.min(6, value + 0.5))}><Plus size={16} /></button>
+                            <button type="button" aria-label="Close image" onClick={close} autoFocus><X size={18} /></button>
+                        </div>
+                    </div>
+                    <div className={styles.viewerStage} onClick={event => { if (event.target === event.currentTarget) close(); }}>
+                        <div
+                            className={styles.viewerImage}
+                            style={{ transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})` }}
+                            onPointerDown={event => {
+                                if (event.button !== 0) return;
+                                dragRef.current = { x: event.clientX, y: event.clientY };
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                            }}
+                            onPointerMove={event => {
+                                if (!dragRef.current) return;
+                                const dx = event.clientX - dragRef.current.x;
+                                const dy = event.clientY - dragRef.current.y;
+                                dragRef.current = { x: event.clientX, y: event.clientY };
+                                setPos(value => ({ x: value.x + dx, y: value.y + dy }));
+                            }}
+                            onPointerUp={() => { dragRef.current = null; }}
+                            onPointerCancel={() => { dragRef.current = null; }}
+                            onLostPointerCapture={() => { dragRef.current = null; }}
+                        >
+                            {/* Original resolution is loaded only when the viewer opens. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={alt} draggable={false} />
+                        </div>
+                    </div>
+                    <p className={styles.viewerHint}>Scroll or use + / − to zoom · Drag to pan · Esc to close</p>
+                </>}
+            </dialog>
         </>
     );
 }

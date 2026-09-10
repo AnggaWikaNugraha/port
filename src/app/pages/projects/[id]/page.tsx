@@ -1,147 +1,144 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowLeft, ArrowUpRight, ChevronDown, Github } from 'lucide-react';
 import { getPublicProjectById } from '@/lib/projects';
 import ProjectMarkdown from '../components/projectMarkdown';
+import { displayProjectTitle, presentProjectDescription } from '../components/projectPresentation';
 import ZoomableImage from './ZoomableImage';
+import DemoAccess from './DemoAccess';
+import shared from '../projects.module.css';
+import styles from './detail.module.css';
 
-type ProjectDetailPageProps = {
-    params: Promise<{ id: string }>;
-};
+type ProjectDetailPageProps = { params: Promise<{ id: string }> };
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     const { id } = await params;
     const project = await getPublicProjectById(id);
+    if (!project) notFound();
 
-    if (!project) {
-        notFound();
-    }
-
+    const title = displayProjectTitle(project.title);
+    const { overview, intro, credentials } = presentProjectDescription(project.description);
     const flows = project.flows ?? [];
+    const technologies = project.techStack ?? [];
+    const hasDemo = Boolean(project.demoUrl || credentials.length);
+    const sections = [
+        ...(overview ? [{ id: 'overview', label: 'Overview' }] : []),
+        ...(technologies.length ? [{ id: 'technologies', label: 'Tech stack' }] : []),
+        ...(flows.length ? [{ id: 'walkthrough', label: 'Product walkthrough' }] : []),
+        ...(hasDemo ? [{ id: 'demo', label: 'Try the demo' }] : []),
+    ];
+    const metadata = [
+        { label: 'My role', value: project.role },
+        { label: 'Project type', value: project.company },
+        { label: 'Year', value: project.year },
+        { label: 'Status', value: project.status === 'in-progress' ? 'In progress' : project.status === 'completed' ? 'Completed' : project.status === 'archived' ? 'Archived' : undefined },
+    ].filter(item => item.value);
 
     return (
-        <section className="min-h-screen bg-gray-950 px-4 py-10 sm:px-6 sm:py-14">
-            <article className="mx-auto max-w-4xl space-y-10">
-                <div className="space-y-6 border-b border-white/[0.07] pb-8">
-                    <Link
-                        href="/pages/projects"
-                        className="inline-flex items-center text-xs uppercase tracking-[0.24em] text-gray-500 transition-colors hover:text-gray-300"
-                    >
-                        ← Back to projects
-                    </Link>
-
-                    <div className="space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.26em] text-gray-500">Case Study</p>
-                        <h1 className="text-3xl font-bold leading-tight text-white sm:text-5xl">
-                            {project.title}
-                        </h1>
-                        {project.description && (
-                            <ProjectMarkdown
-                                content={project.description}
-                                className="max-w-3xl text-sm sm:text-lg [&_p]:leading-7 [&_ul]:leading-7 [&_ol]:leading-7"
-                            />
-                        )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
-                        {(project.role || project.company) && (
-                            <span>{[project.role, project.company].filter(Boolean).join(' · ')}</span>
-                        )}
-                        {project.year && <span>{project.year}</span>}
-                        {project.status === 'in-progress' && <span className="text-yellow-500">In Progress</span>}
-                        {project.featured && <span className="text-gray-300">Featured</span>}
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 text-sm">
-                        {project.demoUrl && (
-                            <Link
-                                href={project.demoUrl}
-                                target="_blank"
-                                className="rounded-full border border-white/10 px-4 py-2 text-gray-200 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
-                            >
-                                Demo ↗
-                            </Link>
-                        )}
-                        {project.repoUrl && (
-                            <Link
-                                href={project.repoUrl}
-                                target="_blank"
-                                className="rounded-full border border-white/10 px-4 py-2 text-gray-400 transition-colors hover:border-white/20 hover:bg-white/[0.04] hover:text-gray-200"
-                            >
-                                Source →
-                            </Link>
-                        )}
-                    </div>
+        <main className={`${shared.page} ${styles.page} font-sans`}>
+            <article className={shared.container}>
+                <div className={styles.topbar}>
+                    <Link href="/pages/projects" className={styles.back}><ArrowLeft size={15} /> All projects</Link>
+                    <span>Behind the build <span className={styles.dot}>/</span> {project.year || 'Project details'}</span>
                 </div>
+
+                <header className={styles.header}>
+                    <p className={shared.eyebrow}><span /> Project case study {project.featured ? ' / Featured' : ''}</p>
+                    <h1>{title}<span className={styles.titleDot}>.</span></h1>
+                    <div className={styles.headerBottom}>
+                        {intro && <p className={styles.intro}>{intro}</p>}
+                        <div className={styles.headerActions}>
+                            {project.demoUrl && <a href={project.demoUrl} target="_blank" rel="noreferrer" className={styles.primaryButton}>Visit website <ArrowUpRight size={16} /></a>}
+                            {project.repoUrl && <a href={project.repoUrl} target="_blank" rel="noreferrer" className={styles.secondaryButton}><Github size={16} /> Source code</a>}
+                        </div>
+                    </div>
+                </header>
 
                 {project.coverImage && (
-                    <div className="overflow-hidden border border-white/[0.08] bg-white/[0.03]" style={{ borderRadius: '4px' }}>
-                        <ZoomableImage
-                            src={project.coverImage}
-                            alt={project.title}
-                            aspectClass="aspect-[16/10] sm:aspect-[16/9]"
-                            className="object-contain"
-                            priority
-                        />
-                    </div>
+                    <figure className={styles.hero}>
+                        <figcaption><span>THE PRODUCT / {title}</span><span>Click to explore <ArrowUpRight size={14} /></span></figcaption>
+                        <div className={styles.heroImage}>
+                            <ZoomableImage src={project.coverImage} alt={`${title} product preview`} aspectClass={styles.heroAspect} className="object-contain" priority />
+                        </div>
+                    </figure>
                 )}
 
-                {project.techStack && project.techStack.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {project.techStack.map(tech => (
-                            <span
-                                key={tech}
-                                className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-gray-400"
-                            >
-                                {tech}
-                            </span>
-                        ))}
-                    </div>
+                {metadata.length > 0 && (
+                    <dl className={styles.metadata}>
+                        {metadata.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.label === 'Status' && <span className={styles.statusDot} data-status={project.status} />}{item.value}</dd></div>)}
+                    </dl>
                 )}
 
-                <div className="space-y-12">
-                    {flows.length > 0 ? (
-                        flows.map((flow, index) => (
-                            <section key={flow.id} className="space-y-5">
-                                <div className="space-y-2">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-gray-600">
-                                        Flow {String(index + 1).padStart(2, '0')}
-                                    </p>
-                                    {flow.title && (
-                                        <h2 className="text-xl font-semibold text-white sm:text-2xl">
-                                            {flow.title}
-                                        </h2>
-                                    )}
-                                </div>
+                {sections.length > 0 && (
+                    <div className={styles.body}>
+                        <aside className={styles.sidebar}>
+                            <nav aria-label="Project sections">
+                                <p>In this project</p>
+                                {sections.map((section, index) => <a key={section.id} href={`#${section.id}`}><span>{String(index + 1).padStart(2, '0')}</span>{section.label}</a>)}
+                            </nav>
+                            <p className={styles.sidebarNote}>A closer look at the product,<br />from the interface to the implementation.</p>
+                        </aside>
 
-                                {flow.imageUrl && (
-                                    <div className="overflow-hidden border border-white/[0.08] bg-white/[0.03]" style={{ borderRadius: '4px' }}>
-                                        <ZoomableImage
-                                            src={flow.imageUrl}
-                                            alt={flow.title ?? `${project.title} flow ${index + 1}`}
-                                            aspectClass="aspect-[16/10] sm:aspect-[16/9]"
-                                            className="object-contain"
-                                        />
+                        <div className={styles.sections}>
+                            {overview && (
+                                <section id="overview" className={styles.section}>
+                                    <p className={styles.sectionLabel}>The idea</p>
+                                    <h2>About the project</h2>
+                                    <ProjectMarkdown content={overview} className={styles.prose} />
+                                </section>
+                            )}
+
+                            {technologies.length > 0 && (
+                                <section id="technologies" className={styles.section}>
+                                    <p className={styles.sectionLabel}>Under the hood</p>
+                                    <h2>Built with</h2>
+                                    <div className={styles.techStack}>{technologies.map(tech => <span key={tech}>{tech}</span>)}</div>
+                                </section>
+                            )}
+
+                            {flows.length > 0 && (
+                                <section id="walkthrough" className={styles.section}>
+                                    <div className={styles.walkthroughHeading}>
+                                        <div><p className={styles.sectionLabel}>Inside the experience</p><h2>Product walkthrough</h2></div>
+                                        <span>{String(flows.length).padStart(2, '0')} features</span>
                                     </div>
-                                )}
+                                    <p className={styles.sectionIntro}>Explore each feature, its interface, and how it works.</p>
+                                    <div className={styles.flows}>
+                                        {flows.map((flow, index) => (
+                                            <details key={flow.id} name="project-flow" open={index === 0} className={styles.flow}>
+                                                <summary>
+                                                    <span className={styles.flowNumber}>{String(index + 1).padStart(2, '0')}</span>
+                                                    <h3>{flow.title || `Feature ${index + 1}`}</h3>
+                                                    <ChevronDown size={17} className={styles.chevron} />
+                                                </summary>
+                                                <div className={styles.flowBody}>
+                                                    {flow.imageUrl && <div className={styles.flowImage}><ZoomableImage src={flow.imageUrl} alt={flow.title || `${title} feature ${index + 1}`} aspectClass="aspect-[16/10]" className="object-contain" /></div>}
+                                                    {flow.description && <ProjectMarkdown content={flow.description} className={styles.prose} />}
+                                                </div>
+                                            </details>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
-                                {flow.description && (
-                                    <ProjectMarkdown
-                                        content={flow.description}
-                                        className="max-w-3xl text-sm sm:text-base [&_p]:leading-7 [&_ul]:leading-7 [&_ol]:leading-7"
-                                    />
-                                )}
-                            </section>
-                        ))
-                    ) : (
-                        <section className="space-y-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-gray-600">Overview</p>
-                            <p className="max-w-3xl text-sm leading-7 text-gray-400 sm:text-base">
-                                Belum ada flow detail untuk project ini.
-                            </p>
-                        </section>
-                    )}
-                </div>
+                            {hasDemo && (
+                                <section id="demo" className={`${styles.section} ${styles.demo}`}>
+                                    <p className={styles.sectionLabel}>Take a look around</p>
+                                    <h2>Try it for yourself.</h2>
+                                    <p className={styles.sectionIntro}>{credentials.length ? 'Use the demo account below to explore the project.' : 'Open the live project and explore the experience.'}</p>
+                                    {credentials.length > 0 && <DemoAccess credentials={credentials} />}
+                                    {project.demoUrl && <a href={project.demoUrl} target="_blank" rel="noreferrer" className={styles.primaryButton}>Launch demo <ArrowUpRight size={16} /></a>}
+                                </section>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                <footer className={styles.footer}>
+                    <div><p>There&apos;s more to explore</p><Link href="/pages/projects">Back to selected work <ArrowUpRight size={24} /></Link></div>
+                    <span>Thoughtfully built. Always learning.</span>
+                </footer>
             </article>
-        </section>
+        </main>
     );
 }
